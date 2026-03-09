@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="tray.css">
+</head>
+
+<body>
+    <div class="tray-container">
+        <div class="menu-item action-open">
+            <span class="icon">📋</span>
+            <span class="label">Open RYZ ClipSync</span>
+            <span class="shortcut">Ctrl+Shift+V</span>
+        </div>
+        <div class="menu-item action-copy-latest">
+            <span class="icon">✨</span>
+            <span class="label">Copy Latest Item</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section-title">RECENT CLIPS</div>
+        <div id="recent-items-list">
+            <!-- Recent items will be injected here -->
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="menu-item action-toggle-monitoring">
+            <span class="icon" id="monitoring-icon">⏸</span>
+            <span class="label" id="monitoring-text">Pause Monitoring</span>
+        </div>
+        <div class="menu-item action-clear-history danger">
+            <span class="icon">🗑</span>
+            <span class="label">Clear All History</span>
+        </div>
+        <div class="menu-item action-toggle-startup">
+            <span class="icon">🔄</span>
+            <span class="label">Auto Startup</span>
+            <input type="checkbox" id="startup-checkbox">
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="menu-item action-quit">
+            <span class="icon">❌</span>
+            <span class="label">Quit RYZ ClipSync</span>
+        </div>
+    </div>
+    <script src="tray-renderer.js"></script>
+</body>
+
+</html>

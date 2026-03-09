@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clipboard Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* OLED Black + Green Theme */
+      --bg-primary: #000000;
+      --bg-secondary: #0a0a0a;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --bg-card-hover: rgba(0, 255, 136, 0.04);
+      --bg-glass: rgba(10, 10, 10, 0.92);
+      --border-subtle: rgba(0, 255, 136, 0.06);
+      --border-hover: rgba(0, 255, 136, 0.15);
+      --border-active: rgba(0, 255, 136, 0.3);
+      --text-primary: #e8ffe8;
+      --text-secondary: rgba(232, 255, 232, 0.55);
+      --text-muted: rgba(232, 255, 232, 0.3);
+      --accent: #00ff88;
+      --accent-dim: #00cc6a;
+      --accent-glow: rgba(0, 255, 136, 0.15);
+      --accent-glow-strong: rgba(0, 255, 136, 0.25);
+      --danger: #ff4d6a;
+      --danger-glow: rgba(255, 77, 106, 0.2);
+      --success: #00ff88;
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-lg: 22px;
+      --radius-xl: 24px;
+      --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.4);
+      --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.6);
+      --shadow-glow: 0 0 20px rgba(0, 255, 136, 0.08);
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: transparent;
+      overflow: hidden;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      width: 100vw;
+      height: 100vh;
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+    }
+
+    /* ─── Title Bar ─── */
+    .title-bar {
+      height: 48px;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      -webkit-app-region: drag;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .title-bar::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.2), transparent);
+    }
+
+    .title-bar .title {
+      color: var(--text-primary);
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .title-bar .title-icon {
+      width: 22px;
+      height: 22px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.25);
+    }
+
+    .title-bar .title-icon svg {
+      width: 12px;
+      height: 12px;
+      fill: #000;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      -webkit-app-region: no-drag;
+    }
+
+    .window-controls .win-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .window-controls .win-dot svg {
+      width: 7px;
+      height: 7px;
+      stroke: #000;
+      fill: none;
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .window-controls .win-dot:hover svg {
+      opacity: 0.7;
+    }
+
+    .win-dot.dot-minimize {
+      background: #ffbd2e;
+    }
+
+    .win-dot.dot-minimize:hover {
+      background: #ffbd2e;
+      box-shadow: 0 0 8px rgba(255, 189, 46, 0.4);
+    }
+
+    .win-dot.dot-close {
+      background: #ff5f57;
+    }
+
+    .win-dot.dot-close:hover {
+      background: #ff5f57;
+      box-shadow: 0 0 10px rgba(255, 95, 87, 0.5);
+    }
+
+    /* ─── Header ─── */
+    .header {
+      padding: 18px 18px 14px;
+      flex-shrink: 0;
+    }
+
+    .header-greeting {
+      color: var(--accent-dim);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 3px;
+    }
+
+    .header h1 {
+      color: var(--text-primary);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+    }
+
+    .header h1 .accent {
+      color: var(--accent);
+    }
+
+    .search-box {
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 11px 16px 11px 40px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      background: rgba(0, 255, 136, 0.02);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 400;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-box input:focus {
+      border-color: rgba(0, 255, 136, 0.35);
+      background: rgba(0, 255, 136, 0.04);
+      box-shadow: 0 0 0 3px var(--accent-glow), var(--shadow-glow);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      color: var(--text-muted);
+      pointer-events: none;
+      transition: var(--transition);
+    }
+
+    .search-box input:focus~.search-icon {
+      color: var(--accent);
+    }
+
+    .search-icon svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ─── Toolbar ─── */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 18px 10px;
+      flex-shrink: 0;
+    }
+
+    .stats {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    .stats .count {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* Toggle Switch */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+    }
+
+    .toggle-label {
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 34px;
+      height: 18px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      left: 1px;
+      top: 1px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      transition: var(--transition);
+    }
+
+    .toggle-switch input:checked+.toggle-slider {
+      background: rgba(0, 255, 136, 0.2);
+      border-color: rgba(0, 255, 136, 0.3);
+    }
+
+    .toggle-switch input:checked+.toggle-slider::before {
+      transform: translateX(16px);
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+    }
+
+    /* Delete All Button */
+    .btn-delete-all {
+      padding: 6px 12px;
+      background: rgba(255, 77, 106, 0.08);
+      border: 1px solid rgba(255, 77, 106, 0.12);
+      border-radius: var(--radius-sm);
+      color: var(--danger);
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-delete-all svg {
+      width: 12px;
+      height: 12px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .btn-delete-all:hover {
+      background: rgba(255, 77, 106, 0.15);
+      border-color: rgba(255, 77, 106, 0.25);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px var(--danger-glow);
+    }
+
+    .btn-delete-all:active {
+      transform: translateY(0);
+    }
+
+    /* ─── Content Area ─── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2px 12px 14px;
+    }
+
+    .content::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .content::-webkit-scrollbar-thumb {
+      background: rgba(0, 255, 136, 0.1);
+      border-radius: 10px;
+    }
+
+    .content::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 255, 136, 0.2);
+    }
+
+    .clipboard-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* ─── Clipboard Item Card ─── */
+    .clipboard-item {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      padding: 13px 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid var(--border-subtle);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .clipboard-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2.5px;
+      background: var(--accent);
+      border-radius: 0 2px 2px 0;
+      opacity: 0;
+      transition: var(--transition);
+      box-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+    }
+
+    .clipboard-item:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .clipboard-item:hover::before {
+      opacity: 1;
+    }
+
+    .clipboard-item:active {
+      transform: translateY(0);
+    }
+
+    .clipboard-item .item-number {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--accent-dim);
+      opacity: 0.3;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .clipboard-item .text {
+      color: var(--text-primary);
+      font-size: 12.5px;
+      font-weight: 400;
+      line-height: 1.65;
+      max-height: 58px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      padding-right: 22px;
+      word-break: break-word;
+    }
+
+    .clipboard-item .meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 9px;
+      padding-top: 9px;
+      border-top: 1px solid rgba(0, 255, 136, 0.04);
+    }
+
+    .clipboard-item .timestamp {
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .clipboard-item .timestamp svg {
+      width: 11px;
+      height: 11px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .clipboard-item .copy-hint {
+      color: var(--accent);
+      font-size: 9px;
+      font-weight: 700;
+      background: rgba(0, 255, 136, 0.06);
+      padding: 3px 9px;
+      border-radius: 20px;
+      border: 1px solid rgba(0, 255, 136, 0.1);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      opacity: 0;
+      transform: translateX(4px);
+      transition: var(--transition);
+    }
+
+    .clipboard-item:hover .copy-hint {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* ─── Context Menu ─── */
+    .context-menu {
+      position: fixed;
+      background: var(--bg-glass);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--border-hover);
+      border-radius: var(--radius-md);
+      padding: 5px;
+      min-width: 160px;
+      box-shadow: var(--shadow-elevated), var(--shadow-glow);
+      z-index: 1000;
+      display: none;
+      animation: contextMenuIn 0.15s ease-out;
+    }
+
+    @keyframes contextMenuIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .context-menu.show {
+      display: block;
+    }
+
+    .context-menu-item {
+      padding: 9px 13px;
+      color: var(--text-primary);
+      font-size: 11.5px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+    }
+
+    .context-menu-item svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .context-menu-item:hover {
+      background: rgba(0, 255, 136, 0.06);
+      color: var(--accent);
+    }
+
+    .context-menu-item.danger {
+      color: var(--danger);
+    }
+
+    .context-menu-item.danger:hover {
+      background: rgba(255, 77, 106, 0.08);
+    }
+
+    .context-menu-divider {
+      height: 1px;
+      background: var(--border-subtle);
+      margin: 3px 8px;
+    }
+
+    /* ─── Empty State ─── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 30px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .empty-icon {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 18px;
+      background: rgba(0, 255, 136, 0.04);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .empty-state .empty-icon svg {
+      width: 26px;
+      height: 26px;
+      stroke: var(--accent-dim);
+      fill: none;
+      stroke-width: 1.5;
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .empty-state .sub {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* ─── Toast Notification ─── */
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translate(-50%, 50px);
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      color: var(--accent);
+      padding: 9px 18px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      box-shadow: var(--shadow-elevated), 0 0 20px rgba(0, 255, 136, 0.1);
+      border: 1px solid var(--border-hover);
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 1001;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+
+    .toast svg {
+      width: 13px;
+      height: 13px;
+      stroke: var(--accent);
+      fill: none;
+      stroke-width: 2.5;
+    }
+
+    .toast.show {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+
+    /* ─── Modal Overlay ─── */
+    .modal-overlay {
+      position: absolute;
+      /* Fixed to Absolute to respect container radius */
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .modal {
+      background: #0a0a0a;
+      border: 1px solid var(--border-hover);
+      border-radius: 24px;
+      padding: 32px 24px;
+      width: 280px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: modalIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .modal .modal-icon {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 20px;
+      background: rgba(255, 77, 106, 0.06);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 77, 106, 0.15);
+    }
+
+    .modal .modal-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--danger);
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    .modal h3 {
+      color: var(--text-primary);
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.2px;
+    }
+
+    .modal p {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+    }
+
+    .btn-cancel {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle) !important;
+    }
+
+    .btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-primary);
+    }
+
+    .btn-confirm-delete {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-confirm-delete:hover {
+      background: #ff3358;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px var(--danger-glow);
+    }
+
+    /* ─── Monitoring Status ─── */
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px rgba(0, 255, 136, 0.5);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-dot.paused {
+      background: var(--text-muted);
+      box-shadow: none;
+      animation: none;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    .status-text {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+    }
+
+    .shortcut-hint {
+      font-size: 9px;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    /* ─── Slide In Animation ─── */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ─── Developer Credit ─── */
+    .developer-credit {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--text-muted);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      opacity: 0.6;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .developer-credit .accent {
+      font-weight: 700;
+      display: inline-block;
+      background: linear-gradient(90deg, 
+        #ff0000, 
+        #ff8800, 
+        #ffff00, 
+        #00ff00, 
+        #00ffff, 
+        #0088ff, 
+        #ff00ff, 
+        #ff0000);
+      background-size: 400% 100%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: rgb-flow 3s linear infinite;
+      filter: drop-shadow(0 0 8px rgba(255, 0, 128, 0.4));
+    }
+
+    @keyframes rgb-flow {
+      0% {
+        background-position: 0% 50%;
+      }
+      100% {
+        background-position: 400% 50%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Title Bar -->
+    <div class="title-bar">
+      <span class="title">
+        <span class="title-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+          </svg>
+        </span>
+        RYZ ClipSync
+      </span>
+      <div class="window-controls">
+        <button class="win-dot dot-minimize" id="minimizeBtn" title="Minimize">
+          <svg viewBox="0 0 24 24">
+            <line x1="6" y1="12" x2="18" y2="12" />
+          </svg>
+        </button>
+        <button class="win-dot dot-close" id="closeBtn" title="Close to Tray">
+          <svg viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Confirm Modal (Relocated for Rounded Corners) -->
+    <div class="modal-overlay" id="confirmModal">
+      <div class="modal">
+        <div class="modal-icon">
+          <svg viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+        </div>
+        <h3>Clear History?</h3>
+        <p>This will permanently delete all clip history. This action cannot be undone.</p>
+        <div class="modal-buttons">
+          <button class="btn-cancel" id="cancelDeleteBtn">Cancel</button>
+          <button class="btn-confirm-delete" id="confirmDeleteBtn">Delete All</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+      <p class="header-greeting">Clipboard</p>
+      <h1><span class="accent">History</span></h1>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search history...">
+        <span class="search-icon">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </span>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="status-indicator">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="stats" id="statsText"><span class="count">0</span> items</span>
+      </div>
+      <div class="toolbar-actions">
+        <label class="toggle-container">
+          <span class="toggle-label">Auto</span>
+          <span class="toggle-switch">
+            <input type="checkbox" id="autoStartupCheckbox">
+            <span class="toggle-slider"></span>
+          </span>
+        </label>
+        <button class="btn-delete-all" id="deleteAllBtn">
+          <svg viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="clipboard-list" id="clipboardList"></div>
+    </div>
+  </div>
+
+  <!-- Context Menu -->
+  <div class="context-menu" id="contextMenu">
+    <div class="context-menu-item" data-action="copy">
+      <svg viewBox="0 0 24 24">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+      </svg>
+      Copy
+    </div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item danger" data-action="delete">
+      <svg viewBox="0 0 24 24">
+        <polyline points="3 6 5 6 21 6" />
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      </svg>
+      Delete
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <svg viewBox="0 0 24 24">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+    <span id="toastText">Copied!</span>
+  </div>
+
+  <!-- Developer Credit -->
+  <div class="developer-credit">
+    Developed By <span class="accent">R ! Y 4 Z</span>
+  </div>
+
+  <script>
+    let clipboardHistory = [];
+    let filteredHistory = [];
+    let contextMenuItemIndex = null;
+    let autoStartupEnabled = false;
+
+    const clipboardListEl = document.getElementById('clipboardList');
+    const searchInput = document.getElementById('searchInput');
+    const statsText = document.getElementById('statsText');
+    const deleteAllBtn = document.getElementById('deleteAllBtn');
+    const autoStartupCheckbox = document.getElementById('autoStartupCheckbox');
+    const contextMenu = document.getElementById('contextMenu');
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toastText');
+    const minimizeBtn = document.getElementById('minimizeBtn');
+    const closeBtn = document.getElementById('closeBtn');
+    const confirmModal = document.getElementById('confirmModal');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+    // Format timestamp
+    function formatTimestamp(timestamp) {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diff = now - date;
+
+      if (diff < 60000) {
+        return 'Now';
+      } else if (diff < 3600000) {
+        const mins = Math.floor(diff / 60000);
+        return `${mins}m`;
+      } else if (diff < 86400000) {
+        const hrs = Math.floor(diff / 3600000);
+        return `${hrs}h`;
+      } else {
+        const days = Math.floor(diff / 86400000);
+        if (days === 1) return '1d';
+        if (days < 7) return `${days}d`;
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+    }
+
+    // Render clipboard list
+    function renderList(items) {
+      if (items.length === 0) {
+        clipboardListEl.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">
+              <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+            </div>
+            <p>No items yet</p>
+            <p class="sub">Copy something to get started</p>
+          </div>
+        `;
+      } else {
+        clipboardListEl.innerHTML = items.map((item, index) => `
+          <div class="clipboard-item" data-index="${index}" style="animation: slideIn 0.3s ease ${Math.min(index * 0.03, 0.3)}s both">
+            <span class="item-number">#${index + 1}</span>
+            <div class="text">${escapeHtml(item.text)}</div>
+            <div class="meta">
+              <span class="timestamp">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                ${formatTimestamp(item.timestamp)}
+              </span>
+              <span class="copy-hint">Tap</span>
+            </div>
+          </div>
+        `).join('');
+
+        // Add event listeners
+        document.querySelectorAll('.clipboard-item').forEach(item => {
+          item.addEventListener('dblclick', handleDoubleClick);
+          item.addEventListener('contextmenu', handleContextMenu);
+        });
+      }
+
+      statsText.innerHTML = `<span class="count">${items.length}</span> item${items.length !== 1 ? 's' : ''}`;
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Filter list based on search
+    function filterList(searchTerm) {
+      if (!searchTerm.trim()) {
+        filteredHistory = [...clipboardHistory];
+      } else {
+        const term = searchTerm.toLowerCase();
+        filteredHistory = clipboardHistory.filter(item =>
+          item.text.toLowerCase().includes(term)
+        );
+      }
+      renderList(filteredHistory);
+    }
+
+    // Show toast
+    function showToast(message) {
+      toastText.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 1600);
+    }
+
+    // Handle double click
+    async function handleDoubleClick(e) {
+      const index = parseInt(e.currentTarget.dataset.index);
+      const item = filteredHistory[index];
+      if (item) {
+        await window.electronAPI.copyText(item.text);
+        showToast('Copied!');
+      }
+    }
+
+    // Handle context menu
+    function handleContextMenu(e) {
+      e.preventDefault();
+      contextMenuItemIndex = parseInt(e.currentTarget.dataset.index);
+
+      let x = e.clientX;
+      let y = e.clientY;
+
+      contextMenu.classList.add('show');
+      const rect = contextMenu.getBoundingClientRect();
+      if (x + rect.width > window.innerWidth) x = window.innerWidth - rect.width - 8;
+      if (y + rect.height > window.innerHeight) y = window.innerHeight - rect.height - 8;
+
+      contextMenu.style.left = `${x}px`;
+      contextMenu.style.top = `${y}px`;
+    }
+
+    // Hide context menu
+    function hideContextMenu() {
+      contextMenu.classList.remove('show');
+      contextMenuItemIndex = null;
+    }
+
+    // Handle context menu actions
+    contextMenu.addEventListener('click', async (e) => {
+      const action = e.target.closest('.context-menu-item')?.dataset.action;
+
+      if (action === 'copy' && contextMenuItemIndex !== null) {
+        const item = filteredHistory[contextMenuItemIndex];
+        if (item) {
+          await window.electronAPI.copyText(item.text);
+          showToast('Copied!');
+        }
+      } else if (action === 'delete' && contextMenuItemIndex !== null) {
+        const actualIndex = clipboardHistory.indexOf(filteredHistory[contextMenuItemIndex]);
+        if (actualIndex !== -1) {
+          clipboardHistory = await window.electronAPI.deleteItem(actualIndex);
+          filterList(searchInput.value);
+          showToast('Deleted');
+        }
+      }
+
+      hideContextMenu();
+    });
+
+    // Hide context menu on click elsewhere
+    document.addEventListener('click', (e) => {
+      if (!contextMenu.contains(e.target)) {
+        hideContextMenu();
+      }
+    });
+
+    // Window controls
+    minimizeBtn.addEventListener('click', () => {
+      window.electronAPI.minimizeWindow();
+    });
+
+    closeBtn.addEventListener('click', () => {
+      window.electronAPI.closeWindow();
+    });
+
+    // Search input
+    searchInput.addEventListener('input', (e) => {
+      filterList(e.target.value);
+    });
+
+    deleteAllBtn.addEventListener('click', () => {
+      if (clipboardHistory.length === 0) return;
+      confirmModal.classList.add('show');
+    });
+
+    cancelDeleteBtn.addEventListener('click', () => {
+      confirmModal.classList.remove('show');
+    });
+
+    confirmDeleteBtn.addEventListener('click', async () => {
+      confirmModal.classList.remove('show');
+      clipboardHistory = await window.electronAPI.deleteAll();
+      filterList(searchInput.value);
+      showToast('Cleared');
+    });
+
+    // Close modal on overlay click
+    confirmModal.addEventListener('click', (e) => {
+      if (e.target === confirmModal) {
+        confirmModal.classList.remove('show');
+      }
+    });
+
+    // Auto startup checkbox
+    autoStartupCheckbox.addEventListener('change', async (e) => {
+      await window.electronAPI.setAutoStartup(e.target.checked);
+      autoStartupEnabled = e.target.checked;
+    });
+
+    // Modal overlay relocated, but JS references stay the same
+    // confirmModal = document.getElementById('confirmModal') etc already exist
+
+    // Listen for clipboard updates
+    window.electronAPI.onClipboardUpdated((history) => {
+      clipboardHistory = history;
+      filterList(searchInput.value);
+    });
+
+    // Listen for tray toast messages
+    window.electronAPI.onShowToast((message) => {
+      showToast(message);
+    });
+
+    // Listen for monitoring status changes from tray
+    const statusDot = document.getElementById('statusDot');
+    window.electronAPI.onMonitoringChanged((isActive) => {
+      if (isActive) {
+        statusDot.classList.remove('paused');
+      } else {
+        statusDot.classList.add('paused');
+      }
+    });
+
+    // Listen for auto-startup changes from tray
+    window.electronAPI.onAutoStartupChanged((enabled) => {
+      autoStartupCheckbox.checked = enabled;
+      autoStartupEnabled = enabled;
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        hideContextMenu();
+        confirmModal.classList.remove('show');
+      }
+      // Ctrl+F to focus search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        searchInput.focus();
+      }
+    });
+
+    // Load initial data
+    async function init() {
+      clipboardHistory = await window.electronAPI.getClipboardHistory();
+      filteredHistory = [...clipboardHistory];
+      renderList(filteredHistory);
+
+      autoStartupEnabled = await window.electronAPI.getAutoStartup();
+      autoStartupCheckbox.checked = autoStartupEnabled;
+    }
+
+    init();
+  </script>
+</body>
+
+</html>

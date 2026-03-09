@@ -1,0 +1,163 @@
+:root {
+    --bg-primary: #000000;
+    --bg-secondary: #0a0a0a;
+    --bg-hover: rgba(0, 255, 136, 0.08);
+    --border-subtle: rgba(0, 255, 136, 0.1);
+    --text-primary: #e8ffe8;
+    --text-secondary: rgba(232, 255, 232, 0.6);
+    --text-muted: rgba(232, 255, 232, 0.35);
+    --accent: #00ff88;
+    --danger: #ff4d6a;
+    --radius: 12px;
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 40px;
+    /* Large space for the shadow buffer */
+    background: transparent !important;
+    font-family: var(--font-family);
+    overflow: hidden;
+    user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.tray-container {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    padding: 6px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 255, 136, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 260px;
+    /* Constant width */
+    animation: slideUp 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    color: var(--text-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    gap: 12px;
+}
+
+.menu-item:hover {
+    background: var(--bg-hover);
+    color: var(--accent);
+}
+
+.menu-item .icon {
+    font-size: 14px;
+    width: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.menu-item .label {
+    flex: 1;
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.menu-item .shortcut {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 4px 10px;
+}
+
+.section-title {
+    padding: 6px 14px 4px;
+    color: var(--text-muted);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.recent-item {
+    padding: 8px 12px 8px 44px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    margin: 0 4px;
+}
+
+.recent-item:hover {
+    background: rgba(0, 255, 136, 0.05);
+    color: var(--accent);
+}
+
+.danger {
+    color: var(--danger);
+}
+
+.danger:hover {
+    background: rgba(255, 77, 106, 0.08);
+    color: var(--danger);
+}
+
+/* Custom Checkbox Style */
+#startup-checkbox {
+    appearance: none;
+    width: 32px;
+    height: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#startup-checkbox:checked {
+    background: rgba(0, 255, 136, 0.3);
+}
+
+#startup-checkbox::before {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s, background 0.3s;
+}
+
+#startup-checkbox:checked::before {
+    transform: translateX(16px);
+    background: var(--accent);
+}

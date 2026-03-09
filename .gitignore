@@ -1,0 +1,13 @@
+# Node & Build
+node_modules/
+/dist/
+/out/
+*.log
+
+# OS Specific
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
