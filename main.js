@@ -195,7 +195,7 @@ function createWindow() {
       mainWindow.hide();
       if (tray) {
         tray.displayBalloon({
-          title: 'Clipboard Manager',
+          title: 'RYZ ClipSync',
           content: 'Running in system tray. Double-click tray icon to restore.'
         });
       }
@@ -220,7 +220,7 @@ function createTray() {
   // Custom Tray Window
   createTrayWindow();
 
-  tray.setToolTip('RYZ ClipSync — Clipboard Manager');
+  tray.setToolTip('RYZ ClipSync');
 
   tray.on('click', () => {
     toggleTrayWindow();

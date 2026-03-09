@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clipboard Manager</title>
+  <title>RYZ ClipSync</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -111,6 +111,21 @@
       box-shadow: 0 0 10px rgba(0, 255, 136, 0.15);
       overflow: hidden;
       border: 1px solid var(--border-subtle);
+      animation: logo-glow-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes logo-glow-pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 10px rgba(0, 255, 136, 0.15);
+        border-color: var(--border-subtle);
+      }
+
+      50% {
+        box-shadow: 0 0 18px rgba(0, 255, 136, 0.4);
+        border-color: rgba(0, 255, 136, 0.3);
+      }
     }
 
     .title-bar .title-icon img {
@@ -198,9 +213,9 @@
       width: 8px;
       height: 8px;
       fill: rgba(255, 255, 255, 0.6);
-      transition: var(--transition);
+      stroke: none;
       opacity: 1;
-      /* Override default opacity */
+      transition: var(--transition);
     }
 
     .win-dot.dot-pin.active svg {
@@ -956,7 +971,7 @@
         <div class="title-icon">
           <img src="logo.png" alt="Logo">
         </div>
-        Clipboard Manager
+        RYZ ClipSync
       </div>
       <div class="window-controls">
         <button class="win-dot dot-pin" id="pinBtn" title="Always on Top">
