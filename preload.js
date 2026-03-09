@@ -27,5 +27,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getMonitoringStatus: () => ipcRenderer.invoke('get-monitoring-status'),
   setIgnoreMouseEvents: (ignore, options) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
   resizeTray: (height) => ipcRenderer.send('resize-tray', height),
-  setAlwaysOnTop: (enabled) => ipcRenderer.invoke('set-always-on-top', enabled)
+  setAlwaysOnTop: (enabled) => ipcRenderer.invoke('set-always-on-top', enabled),
+  getLogoData: () => ipcRenderer.invoke('get-logo-data')
 });

@@ -10,6 +10,16 @@ let clipboardHistory = [];
 let DATA_FILE;
 let isMonitoring = true;
 
+function getAssetPath(filename) {
+  // In packaged app, check extraResources first, then app directory
+  if (app.isPackaged) {
+    const resourcePath = path.join(process.resourcesPath, filename);
+    if (fs.existsSync(resourcePath)) return resourcePath;
+  }
+  // Dev mode or fallback
+  return path.join(__dirname, filename);
+}
+
 function getDataFile() {
   if (!DATA_FILE) {
     DATA_FILE = path.join(app.getPath('userData'), 'clipboard_history.json');
@@ -166,6 +176,15 @@ function startClipboardMonitoring() {
 }
 
 function createWindow() {
+  ipcMain.handle('get-logo-data', () => {
+    const iconPath = getAssetPath('logo.png');
+    if (fs.existsSync(iconPath)) {
+      // Resize to 32x32 for UI consistency and performance
+      return nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 }).toDataURL();
+    }
+    return '';
+  });
+
   mainWindow = new BrowserWindow({
     width: 420,
     height: 720,
@@ -182,7 +201,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true
     },
-    icon: path.join(__dirname, 'logo.png')
+    icon: getAssetPath('logo.png')
   });
 
   mainWindow.loadFile('index.html');
@@ -206,7 +225,7 @@ function createWindow() {
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, 'logo.png');
+  const iconPath = getAssetPath('logo.png');
   let trayIcon;
 
   if (fs.existsSync(iconPath)) {

@@ -15,7 +15,7 @@
 
 ---
 
-**Developed By [R ! Y 4 Z](https://github.com/riy4z)**
+**Developed By [R ! Y 4 Z](https://github.com/riyazalsodie)**
 
 [Download](#-download) • [Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Support](#-support)
 
@@ -91,18 +91,9 @@ Escape              →    Close Menus/Modals
 
 ### For End Users
 
-Choose the installation method that works best for you:
+Download the Windows Installer:
 
-#### Option 1: Standalone Executable (Portable)
-```
-📦 RYZClipSync-1.0.0-win.zip
-```
-- ✅ No installation required
-- ✅ Portable - run from USB drive
-- ✅ Extract and run immediately
-- 📍 Download: `[Link to .zip file]`
-
-#### Option 2: Windows Installer (Recommended)
+#### Windows Installer (Recommended)
 ```
 🔧 RYZClipSync-Setup-1.0.0.exe
 ```
@@ -111,9 +102,6 @@ Choose the installation method that works best for you:
 - ✅ Auto-updates ready (future)
 - ✅ Uninstall support
 - 📍 Download: `[Link to .exe installer]`
-
-#### Option 3: Build from Source
-For developers and advanced users. See [Building from Source](#-building-from-source).
 
 ---
 
@@ -125,13 +113,6 @@ For developers and advanced users. See [Building from Source](#-building-from-so
 2. **Run** the installer
 3. **Follow** the installation wizard
 4. **Launch** from Start Menu or Desktop shortcut
-
-### Using the Portable Version
-
-1. **Download** `RYZClipSync-1.0.0-win.zip`
-2. **Extract** to any folder (e.g., `C:\Apps\RYZClipSync`)
-3. **Run** `RYZ ClipSync.exe`
-4. *(Optional)* Create desktop shortcut manually
 
 ### First Run
 
@@ -146,7 +127,7 @@ On first launch:
 ## ⚡ Quick Start
 
 ```
-1. Install or extract the application
+1. Install the application
 2. Launch RYZ ClipSync
 3. Copy any text (Ctrl + C)
 4. Open the app to see your clipboard history
@@ -254,8 +235,7 @@ RYZ ClipSync/
 ├── 📄 README.md            # Documentation
 │
 └── 📁 dist/                # Built executables (after build)
-    ├── RYZClipSync-Setup-1.0.0.exe    (Installer)
-    └── win-unpacked/                  (Portable version)
+    └── RYZClipSync-Setup-1.0.0.exe    (Installer)
 ```
 
 #### Configuration Files
@@ -291,7 +271,7 @@ RYZ ClipSync/
 git clone <repository-url>
 cd "RYZ ClipSync"
 
-# Or download ZIP and extract
+# Or download ZIP and open
 cd "e:\Backup sync"
 ```
 
@@ -316,29 +296,6 @@ npm run build
 
 Output: `dist/RYZClipSync-Setup-1.0.0.exe`
 
-#### Build Portable Version
-Modify `package.json` to add portable target:
-
-```json
-"build": {
-  "appId": "com.clipboard.manager",
-  "win": {
-    "target": [
-      "nsis",
-      "portable"
-    ],
-    "icon": null
-  }
-}
-```
-
-Then run:
-```bash
-npm run build
-```
-
-Output: `dist/RYZClipSync-1.0.0-win.exe` (portable)
-
 ### Build Configuration
 
 **For NSIS Installer** (default):
@@ -346,11 +303,6 @@ Output: `dist/RYZClipSync-1.0.0-win.exe` (portable)
 - Adds Start Menu entries
 - Creates desktop shortcut
 - Includes uninstaller
-
-**For Portable**:
-- Single executable
-- No installation needed
-- Runs from any location
 
 ### Customizing the Build
 

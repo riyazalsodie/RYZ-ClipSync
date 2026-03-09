@@ -1,24 +1,48 @@
 {
-  "name": "clipboard-manager",
+  "name": "ryz-clipsync",
   "version": "1.0.0",
-  "description": "A clipboard manager with search, persistence, and system tray",
+  "description": "RYZ ClipSync — A premium clipboard manager with search, persistence, and system tray",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder"
   },
-  "keywords": ["clipboard", "manager", "electron"],
-  "author": "",
+  "keywords": [
+    "clipboard",
+    "manager",
+    "electron",
+    "ryz",
+    "clipsync"
+  ],
+  "author": "R!Y4Z",
   "license": "MIT",
   "devDependencies": {
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1"
   },
   "build": {
-    "appId": "com.clipboard.manager",
+    "appId": "com.ryz.clipsync",
+    "productName": "RYZ ClipSync",
+    "files": [
+      "**/*",
+      "!dist/**"
+    ],
+    "extraResources": [
+      {
+        "from": "logo.png",
+        "to": "logo.png"
+      }
+    ],
     "win": {
       "target": "nsis",
-      "icon": null
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
     }
   }
 }

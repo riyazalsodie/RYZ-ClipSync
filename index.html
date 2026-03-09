@@ -969,7 +969,7 @@
     <div class="title-bar">
       <div class="title">
         <div class="title-icon">
-          <img src="logo.png" alt="Logo">
+          <img id="titleLogo" alt="Logo">
         </div>
         RYZ ClipSync
       </div>
@@ -1352,6 +1352,14 @@
 
     // Load initial data
     async function init() {
+      // Load logo
+      try {
+        const logoData = await window.electronAPI.getLogoData();
+        if (logoData) document.getElementById('titleLogo').src = logoData;
+      } catch (err) {
+        console.error('Failed to load logo:', err);
+      }
+
       clipboardHistory = await window.electronAPI.getClipboardHistory();
       filteredHistory = [...clipboardHistory];
       renderList(filteredHistory);
