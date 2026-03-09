@@ -65,13 +65,17 @@ function getTrayWindowPosition() {
 
   // Position it just above the taskbar if taskbar is at bottom
   let y;
+  const padding = 40; // From tray.css body padding
   if (trayBounds.y > workArea.height / 2) {
     // Taskbar is at bottom
-    // Padding is 40px on top/bottom
-    y = Math.round(trayBounds.y - windowBounds.height + 35); // Align menu bottom above tray
+    // We want the bottom of the tray-container (visible part) to be near the tray icon
+    // tray-container bottom = y + padding + contentHeight
+    // trayWindow height = contentHeight + 2 * padding
+    // So y = trayBounds.y - windowBounds.height + padding + 5
+    y = Math.round(trayBounds.y - windowBounds.height + padding + 8);
   } else {
     // Taskbar is at top
-    y = Math.round(trayBounds.y + trayBounds.height - 35); // Align menu top below tray
+    y = Math.round(trayBounds.y + trayBounds.height - padding - 8);
   }
 
   return { x, y };
@@ -177,19 +181,24 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true
-    }
+    },
+    icon: path.join(__dirname, 'logo.png')
   });
 
   mainWindow.loadFile('index.html');
 
   mainWindow.on('close', (e) => {
-    e.preventDefault();
-    mainWindow.hide();
-    if (tray) {
-      tray.displayBalloon({
-        title: 'Clipboard Manager',
-        content: 'Running in system tray. Double-click tray icon to restore.'
-      });
+    if (app.isQuitting) {
+      mainWindow = null;
+    } else {
+      e.preventDefault();
+      mainWindow.hide();
+      if (tray) {
+        tray.displayBalloon({
+          title: 'Clipboard Manager',
+          content: 'Running in system tray. Double-click tray icon to restore.'
+        });
+      }
     }
   });
 
@@ -197,7 +206,7 @@ function createWindow() {
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, 'icon.png');
+  const iconPath = path.join(__dirname, 'logo.png');
   let trayIcon;
 
   if (fs.existsSync(iconPath)) {
@@ -299,9 +308,10 @@ ipcMain.handle('minimize-window', () => {
   return true;
 });
 
-ipcMain.handle('close-window', () => {
-  if (mainWindow) {
-    mainWindow.hide();
+ipcMain.handle('close-window', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) {
+    win.hide();
   }
   return true;
 });
@@ -319,6 +329,13 @@ ipcMain.handle('maximize-window', () => {
 
 ipcMain.handle('is-maximized', () => {
   return mainWindow?.isMaximized() || false;
+});
+
+ipcMain.handle('set-always-on-top', (event, enabled) => {
+  if (mainWindow) {
+    mainWindow.setAlwaysOnTop(enabled);
+  }
+  return true;
 });
 
 
@@ -340,9 +357,39 @@ ipcMain.on('tray-action', (event, action) => {
       break;
     case 'quit':
       globalShortcut.unregisterAll();
-      app.isQuiting = true;
+      app.isQuitting = true;
       app.quit();
       break;
+  }
+});
+
+ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) {
+    win.setIgnoreMouseEvents(ignore, options);
+  }
+});
+
+ipcMain.on('resize-tray', (event, height) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win && tray) {
+    const padding = 80;
+    const newHeight = Math.round(height + padding);
+    const bounds = win.getBounds();
+    if (bounds.height !== newHeight) {
+      win.setBounds({
+        width: bounds.width,
+        height: newHeight,
+        x: bounds.x,
+        y: bounds.y
+      });
+
+      // Reposition after resizing to maintain alignment with tray
+      if (win.isVisible()) {
+        const { x, y } = getTrayWindowPosition();
+        win.setPosition(x, y, false);
+      }
+    }
   }
 });
 

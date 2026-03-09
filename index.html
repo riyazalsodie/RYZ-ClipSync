@@ -103,12 +103,20 @@
     .title-bar .title-icon {
       width: 22px;
       height: 22px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+      background: rgba(255, 255, 255, 0.05);
       border-radius: 7px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 10px rgba(0, 255, 136, 0.25);
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.15);
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .title-bar .title-icon img {
+      width: 90%;
+      height: 90%;
+      object-fit: contain;
     }
 
     .title-bar .title-icon svg {
@@ -169,6 +177,35 @@
     .win-dot.dot-close:hover {
       background: #ff5f57;
       box-shadow: 0 0 10px rgba(255, 95, 87, 0.5);
+    }
+
+    .win-dot.dot-pin {
+      background: rgba(255, 255, 255, 0.08);
+      margin-right: 4px;
+    }
+
+    .win-dot.dot-pin:hover {
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+    }
+
+    .win-dot.dot-pin.active {
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow-strong);
+    }
+
+    .win-dot.dot-pin svg {
+      width: 8px;
+      height: 8px;
+      fill: rgba(255, 255, 255, 0.6);
+      transition: var(--transition);
+      opacity: 1;
+      /* Override default opacity */
+    }
+
+    .win-dot.dot-pin.active svg {
+      fill: #000;
+      opacity: 1;
     }
 
     /* ─── Header ─── */
@@ -882,15 +919,15 @@
     .developer-credit .accent {
       font-weight: 700;
       display: inline-block;
-      background: linear-gradient(90deg, 
-        #ff0000, 
-        #ff8800, 
-        #ffff00, 
-        #00ff00, 
-        #00ffff, 
-        #0088ff, 
-        #ff00ff, 
-        #ff0000);
+      background: linear-gradient(90deg,
+          #ff0000,
+          #ff8800,
+          #ffff00,
+          #00ff00,
+          #00ffff,
+          #0088ff,
+          #ff00ff,
+          #ff0000);
       background-size: 400% 100%;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -903,6 +940,7 @@
       0% {
         background-position: 0% 50%;
       }
+
       100% {
         background-position: 400% 50%;
       }
@@ -914,16 +952,18 @@
   <div class="container">
     <!-- Title Bar -->
     <div class="title-bar">
-      <span class="title">
-        <span class="title-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-            <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-          </svg>
-        </span>
-        RYZ ClipSync
-      </span>
+      <div class="title">
+        <div class="title-icon">
+          <img src="logo.png" alt="Logo">
+        </div>
+        Clipboard Manager
+      </div>
       <div class="window-controls">
+        <button class="win-dot dot-pin" id="pinBtn" title="Always on Top">
+          <svg viewBox="0 0 24 24">
+            <path d="M16 9V4l1-1V2H7v1l1 1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+          </svg>
+        </button>
         <button class="win-dot dot-minimize" id="minimizeBtn" title="Minimize">
           <svg viewBox="0 0 24 24">
             <line x1="6" y1="12" x2="18" y2="12" />
@@ -958,10 +998,8 @@
 
     <!-- Header -->
     <div class="header">
-      <p class="header-greeting">Clipboard</p>
-      <h1><span class="accent">History</span></h1>
       <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Search history...">
+        <input type="text" id="searchInput" placeholder="Search clipboard...">
         <span class="search-icon">
           <svg viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="8" />
@@ -1049,6 +1087,7 @@
     const toastText = document.getElementById('toastText');
     const minimizeBtn = document.getElementById('minimizeBtn');
     const closeBtn = document.getElementById('closeBtn');
+    const pinBtn = document.getElementById('pinBtn');
     const confirmModal = document.getElementById('confirmModal');
     const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
@@ -1210,6 +1249,13 @@
 
     closeBtn.addEventListener('click', () => {
       window.electronAPI.closeWindow();
+    });
+
+    let isAlwaysOnTop = false;
+    pinBtn.addEventListener('click', async () => {
+      isAlwaysOnTop = !isAlwaysOnTop;
+      await window.electronAPI.setAlwaysOnTop(isAlwaysOnTop);
+      pinBtn.classList.toggle('active', isAlwaysOnTop);
     });
 
     // Search input

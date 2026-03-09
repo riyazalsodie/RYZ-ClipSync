@@ -24,5 +24,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('auto-startup-changed', (event, enabled) => callback(enabled));
   },
   trayAction: (action, data) => ipcRenderer.send('tray-action', action, data),
-  getMonitoringStatus: () => ipcRenderer.invoke('get-monitoring-status')
+  getMonitoringStatus: () => ipcRenderer.invoke('get-monitoring-status'),
+  setIgnoreMouseEvents: (ignore, options) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
+  resizeTray: (height) => ipcRenderer.send('resize-tray', height),
+  setAlwaysOnTop: (enabled) => ipcRenderer.invoke('set-always-on-top', enabled)
 });
