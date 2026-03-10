@@ -277,11 +277,6 @@ function updateTrayMenu() {
 }
 
 app.whenReady().then(() => {
-  // Auto startup handling
-  app.setLoginItemSettings({
-    openAtLogin: false
-  });
-
   createWindow();
   createTray();
 });
