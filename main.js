@@ -185,6 +185,8 @@ function createWindow() {
     return '';
   });
 
+  const isHidden = process.argv.includes('--hidden') || app.getLoginItemSettings().wasOpenedAsHidden;
+
   mainWindow = new BrowserWindow({
     width: 420,
     height: 720,
@@ -196,6 +198,7 @@ function createWindow() {
     hasShadow: false,
     maximizable: false,
     resizable: true,
+    show: !isHidden,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -412,10 +415,19 @@ ipcMain.handle('get-monitoring-status', () => {
 });
 
 ipcMain.handle('set-auto-startup', (event, enabled) => {
-  app.setLoginItemSettings({
+  const loginSettings = {
     openAtLogin: enabled,
-    openAsHidden: enabled
-  });
+    openAsHidden: enabled,
+    path: app.getPath('exe'),
+    args: enabled ? ['--hidden'] : []
+  };
+
+  // For development mode, ensure electron binary loads the app
+  if (!app.isPackaged) {
+    loginSettings.args.unshift(app.getAppPath());
+  }
+
+  app.setLoginItemSettings(loginSettings);
 
   // Broadcast change to all windows
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -428,7 +440,16 @@ ipcMain.handle('set-auto-startup', (event, enabled) => {
 });
 
 ipcMain.handle('get-auto-startup', () => {
-  return app.getLoginItemSettings().openAtLogin;
+  const loginSettings = {
+    path: app.getPath('exe'),
+    args: ['--hidden']
+  };
+
+  if (!app.isPackaged) {
+    loginSettings.args.unshift(app.getAppPath());
+  }
+
+  return app.getLoginItemSettings(loginSettings).openAtLogin;
 });
 
 app.on('window-all-closed', (e) => {
