@@ -122,41 +122,73 @@ function loadClipboardHistory() {
   }
 }
 
-// Save clipboard history to file
+let saveTimeout = null;
+
+// Save clipboard history to file (debounced and asynchronous)
 function saveClipboardHistory() {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+  }
+  saveTimeout = setTimeout(() => {
+    fs.writeFile(getDataFile(), JSON.stringify(clipboardHistory, null, 2), 'utf8', (error) => {
+      if (error) {
+        console.error('Error saving clipboard history:', error);
+      }
+    });
+  }, 1000); // Debounce saving by 1 second
+}
+
+// Save clipboard history synchronously (used on exit)
+function saveClipboardHistorySync() {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+  }
   try {
     fs.writeFileSync(getDataFile(), JSON.stringify(clipboardHistory, null, 2), 'utf8');
   } catch (error) {
-    console.error('Error saving clipboard history:', error);
+    console.error('Error saving clipboard history synchronously:', error);
   }
 }
 
 // Add new clipboard item
 function addClipboardItem(text) {
-  if (!text || text.trim() === '' || text === lastClipboardContent) {
+  if (!text || text === lastClipboardContent) {
     return;
   }
 
-  lastClipboardContent = text;
+  // Fast check to skip empty/whitespace strings
+  const hasContent = text.length > 100 ? true : text.trim() !== '';
+  if (!hasContent) return;
 
-  // Remove duplicate if exists
-  clipboardHistory = clipboardHistory.filter(item => item.text !== text);
+  // Truncate extremely large texts to prevent memory/performance issues
+  const MAX_ITEM_TEXT_LENGTH = 50000;
+  let processedText = text;
+  if (text.length > MAX_ITEM_TEXT_LENGTH) {
+    processedText = text.substring(0, MAX_ITEM_TEXT_LENGTH) + '... (truncated)';
+  }
+
+  lastClipboardContent = text; // Keep track of original text to prevent duplicate triggers
+
+  // Remove duplicate if exists (compare against processed text)
+  clipboardHistory = clipboardHistory.filter(item => item.text !== processedText);
 
   // Add to beginning
   clipboardHistory.unshift({
-    text: text,
+    text: processedText,
     timestamp: Date.now()
   });
 
-  // Limit to 1000 items
-  if (clipboardHistory.length > 1000) {
-    clipboardHistory = clipboardHistory.slice(0, 1000);
+  // Limit to 500 items (perfect balance of history vs performance)
+  const MAX_HISTORY_ITEMS = 500;
+  if (clipboardHistory.length > MAX_HISTORY_ITEMS) {
+    clipboardHistory = clipboardHistory.slice(0, MAX_HISTORY_ITEMS);
   }
 
   saveClipboardHistory();
   if (tray) updateTrayMenu();
 
-  if (mainWindow) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('clipboard-updated', clipboardHistory);
   }
 }
@@ -164,13 +196,26 @@ function addClipboardItem(text) {
 // Monitor clipboard
 function startClipboardMonitoring() {
   loadClipboardHistory();
-  lastClipboardContent = clipboard.readText();
+  try {
+    lastClipboardContent = clipboard.readText();
+  } catch (error) {
+    lastClipboardContent = '';
+  }
 
   setInterval(() => {
     if (!isMonitoring) return;
-    const current = clipboard.readText();
-    if (current !== lastClipboardContent && current.trim() !== '') {
-      addClipboardItem(current);
+    try {
+      const current = clipboard.readText();
+      if (!current) return;
+      
+      if (current !== lastClipboardContent) {
+        const hasContent = current.length > 100 ? true : current.trim() !== '';
+        if (hasContent) {
+          addClipboardItem(current);
+        }
+      }
+    } catch (error) {
+      console.error('Error reading clipboard:', error);
     }
   }, 1000);
 }
@@ -460,4 +505,8 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+app.on('before-quit', () => {
+  saveClipboardHistorySync();
 });

@@ -42,8 +42,8 @@ document.querySelector('.action-quit').addEventListener('click', () => {
 });
 
 // Update UI functions
-async function updateTrayUI() {
-    const history = await window.electronAPI.getClipboardHistory();
+async function updateTrayUI(passedHistory) {
+    const history = passedHistory || await window.electronAPI.getClipboardHistory();
     const isStarted = await window.electronAPI.getAutoStartup();
     const isMonitoring = await window.electronAPI.getMonitoringStatus();
 
@@ -79,8 +79,8 @@ async function updateTrayUI() {
 }
 
 // IPC Listeners
-window.electronAPI.onClipboardUpdated(() => {
-    updateTrayUI();
+window.electronAPI.onClipboardUpdated((history) => {
+    updateTrayUI(history);
 });
 
 window.electronAPI.onMonitoringChanged((isMonitoringStatus) => {

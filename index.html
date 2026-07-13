@@ -1142,35 +1142,44 @@
           </div>
         `;
       } else {
-        clipboardListEl.innerHTML = items.map((item, index) => `
-          <div class="clipboard-item" data-index="${index}" style="animation: slideIn 0.3s ease ${Math.min(index * 0.03, 0.3)}s both">
-            <span class="item-number">#${index + 1}</span>
-            <div class="text">${escapeHtml(item.text)}</div>
-            <div class="meta">
-              <span class="timestamp">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                ${formatTimestamp(item.timestamp)}
-              </span>
-              <span class="copy-hint">Tap</span>
-            </div>
-          </div>
-        `).join('');
+        // Limit rendering to first 100 items to avoid DOM lag
+        const itemsToRender = items.slice(0, 100);
+        const isSearching = !!(searchInput && searchInput.value.trim());
 
-        // Add event listeners
-        document.querySelectorAll('.clipboard-item').forEach(item => {
-          item.addEventListener('dblclick', handleDoubleClick);
-          item.addEventListener('contextmenu', handleContextMenu);
-        });
+        clipboardListEl.innerHTML = itemsToRender.map((item, index) => {
+          // Disable animation stagger during search queries to keep typing responsive
+          const animStyle = isSearching
+            ? 'animation: slideIn 0.15s ease both'
+            : `animation: slideIn 0.3s ease ${Math.min(index * 0.03, 0.3)}s both`;
+
+          return `
+            <div class="clipboard-item" data-index="${index}" style="${animStyle}">
+              <span class="item-number">#${index + 1}</span>
+              <div class="text">${escapeHtml(item.text)}</div>
+              <div class="meta">
+                <span class="timestamp">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  ${formatTimestamp(item.timestamp)}
+                </span>
+                <span class="copy-hint">Tap</span>
+              </div>
+            </div>
+          `;
+        }).join('');
       }
 
       statsText.innerHTML = `<span class="count">${items.length}</span> item${items.length !== 1 ? 's' : ''}`;
     }
 
-    // Escape HTML
+    // Escape HTML using fast regex pattern matching
     function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
+      if (typeof text !== 'string') return '';
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
 
     // Filter list based on search
@@ -1195,9 +1204,9 @@
       }, 1600);
     }
 
-    // Handle double click
-    async function handleDoubleClick(e) {
-      const index = parseInt(e.currentTarget.dataset.index);
+    // Handle double click using delegated element reference
+    async function handleDoubleClick(itemEl) {
+      const index = parseInt(itemEl.dataset.index);
       const item = filteredHistory[index];
       if (item) {
         await window.electronAPI.copyText(item.text);
@@ -1205,10 +1214,10 @@
       }
     }
 
-    // Handle context menu
-    function handleContextMenu(e) {
+    // Handle context menu using delegated element reference
+    function handleContextMenu(e, itemEl) {
       e.preventDefault();
-      contextMenuItemIndex = parseInt(e.currentTarget.dataset.index);
+      contextMenuItemIndex = parseInt(itemEl.dataset.index);
 
       let x = e.clientX;
       let y = e.clientY;
@@ -1248,6 +1257,21 @@
       }
 
       hideContextMenu();
+    });
+
+    // Event delegation for clipboard list item clicks and context menu
+    clipboardListEl.addEventListener('dblclick', (e) => {
+      const itemEl = e.target.closest('.clipboard-item');
+      if (itemEl) {
+        handleDoubleClick(itemEl);
+      }
+    });
+
+    clipboardListEl.addEventListener('contextmenu', (e) => {
+      const itemEl = e.target.closest('.clipboard-item');
+      if (itemEl) {
+        handleContextMenu(e, itemEl);
+      }
     });
 
     // Hide context menu on click elsewhere
