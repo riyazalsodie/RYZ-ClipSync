@@ -1,547 +1,212 @@
-# 📋 RYZ ClipSync
-
 <div align="center">
 
-![RYZ ClipSync Banner](https://img.shields.io/badge/RYZ-ClipSync-00ff88?style=for-the-badge&logo=clipboard&logoColor=000&labelColor=000)
+<img src="logo.png" width="180" height="180" alt="RYZ ClipSync Logo" style="border-radius: 50%; box-shadow: 0 0 40px rgba(0, 255, 136, 0.45); margin-bottom: 18px;" />
 
-### **Modern Clipboard Manager for Windows**
+# ⚡ RYZ ClipSync ⚡
 
-*Your clipboard history, beautifully organized and always accessible.*
+### **Ultra-Fast Cyber Clipboard & Image Manager for Windows**
 
-![Electron](https://img.shields.io/badge/Electron-28.0.0-47848F?style=flat-square&logo=electron&logoColor=white)
-![Platform](https://img.shields.io/badge/Platform-Windows-00ff88?style=flat-square&logo=windows&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-00ff88?style=flat-square)
-![Version](https://img.shields.io/badge/Version-1.0.3-00ff88?style=flat-square)
+*Your complete text & image clipboard history — beautifully organized, instantly searchable, and lightning-fast.*
+
+<br/>
+
+[![Version](https://img.shields.io/badge/Version-1.0.3-00ff88?style=for-the-badge&logo=electron&logoColor=000&labelColor=0a0a0a)](https://github.com/riyazalsodie/RYZ-ClipSync/releases/tag/1.0.3)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-00ff88?style=for-the-badge&logo=windows&logoColor=000&labelColor=0a0a0a)](https://github.com/riyazalsodie/RYZ-ClipSync/releases/tag/1.0.3)
+[![Capacity](https://img.shields.io/badge/Capacity-10%2C000%20Items-00ff88?style=for-the-badge&logo=database&logoColor=000&labelColor=0a0a0a)](https://github.com/riyazalsodie/RYZ-ClipSync)
+[![License](https://img.shields.io/badge/License-MIT-00ff88?style=for-the-badge&labelColor=0a0a0a)](LICENSE)
+
+<br/>
+
+[📥 **Download Latest Setup (v1.0.3)**](https://github.com/riyazalsodie/RYZ-ClipSync/releases/download/1.0.3/RYZ.ClipSync.Setup.1.0.3.exe) • [✨ **Features**](#-features) • [🚀 **Quick Start**](#-quick-start) • [📑 **Pagination & Performance**](#-performance--architecture) • [⌨️ **Shortcuts**](#-keyboard-shortcuts) • [📬 **Support**](#-support)
+
+<br/>
 
 ---
-
-**Developed By [R ! Y 4 Z](https://github.com/riyazalsodie)**
-
-[Download](#-download) • [Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Support](#-support)
 
 </div>
 
----
-
-## 📖 Table of Contents
-
-- [Overview](#-overview)
-- [Features](#-features)
-- [Download](#-download)
-- [Installation](#-installation)
-- [Quick Start](#-quick-start)
-- [User Guide](#-user-guide)
-- [Developer Guide](#-developer-guide)
-- [Building from Source](#-building-from-source)
-- [Troubleshooting](#-troubleshooting)
-- [FAQ](#-faq)
-- [Support](#-support)
-- [License](#-license)
-
----
-
 ## 🌟 Overview
 
-**RYZ ClipSync** is a sleek, modern clipboard manager designed for Windows that keeps track of everything you copy. With its elegant OLED-black theme and powerful system tray integration, you'll never lose important copied text or images again.
+**RYZ ClipSync** is an elite, high-performance clipboard management system engineered specifically for Windows. Featuring an ultra-modern **OLED Black + Neon Green Cyberpunk aesthetic**, ClipSync monitors your clipboard seamlessly in the background — instantly storing up to **10,000 text clips and high-resolution screenshots**.
 
-Whether you're a developer, designer, writer, or anyone who copies frequently, ClipSync streamlines your workflow by keeping your clipboard history organized, searchable, and instantly accessible.
+Equipped with **smart pagination controls**, **lazy loading**, and an **acrylic system tray window**, ClipSync runs with a near-zero memory footprint and zero interface lag.
+
+<br/>
 
 ---
 
 ## ✨ Features
 
-### 🎯 Core Capabilities
+<div align="center">
 
-| Feature | Description |
-|---------|-------------|
-| **📌 Persistent History** | Stores up to 10,000 clipboard items locally, surviving restarts |
-| **🖼️ Image Clipboard Support** | Captures screenshots & copied images with thumbnails and instant copying |
-| **📑 Pagination & Lazy Load** | Smooth 50-item pages and infinite scroll for 60+ FPS zero-lag browsing |
-| **🔍 Smart Search** | Real-time filtering across all 10,000 items with instant matches |
-| **⚡ Auto-Monitoring** | Captures clipboard changes every 1 second automatically |
-| **💾 Auto-Save** | All history saved instantly to disk, no data loss |
-| **🔄 Duplicate Prevention** | Intelligently handles duplicate entries via hashing |
+| 🖼️ Media & Clip Engine | ⚡ Performance & Scalability | 🎨 Interface & Control |
+|:---:|:---:|:---:|
+| **Full Image Clipboard**<br/>Screenshots & web images captured automatically | **10,000 Items Capacity**<br/>Asynchronous debounced disk persistence | **OLED Neon Aesthetics**<br/>Pure blacks, cyber glow, and smooth animations |
+| **Instant Thumbnail Previews**<br/>Transparency checkerboard & dimensions | **Zero-Lag Pagination**<br/>Strict 50 items/page keeps DOM at 60+ FPS | **Custom Acrylic System Tray**<br/>Floating popup for 1-click recent clips |
+| **Copy Images Back to OS**<br/>Direct IPC bridge to paste anywhere | **Infinite Scroll Lazy Load**<br/>Auto-appends clips smoothly on scroll | **Global Hotkey**<br/>`Ctrl + Shift + V` for instant window toggle |
 
-### 🎨 User Interface
+</div>
 
-- **🌙 OLED Black Theme** - Easy on the eyes, perfect for night use
-- **✨ Smooth Animations** - Polished transitions and hover effects
-- **📱 Resizable Window** - Adjust to your preferred size (360-520px width)
-- **🎯 Context Menu** - Right-click for quick copy/delete actions
-- **📊 Visual Stats** - See item count and monitoring status at a glance
+<br/>
 
-### 🔔 System Tray
+### 🎯 Core Capabilities Breakdown
 
-- **📌 Recent Clips** - Access last 5 items directly from tray
-- **📋 Copy Latest** - One-click to copy most recent item
-- **⏸️ Pause/Resume** - Toggle monitoring without opening app
-- **🗑️ Clear History** - Wipe all data with confirmation
-- **🔄 Auto Startup** - Launch with Windows automatically
-- **💬 Notifications** - Get notified of important actions
+- 🖼️ **Image & Screenshot Capture**: Automatically detects when images or screenshots (`Win+Shift+S`, PrintScreen, browser "Copy Image", Figma, etc.) are copied. Saves original high-res files to disk while generating instant UI preview cards with resolution badges (e.g. `1920×1080`).
+- 🔄 **Two-Way Image Copying**: Double-click or tap any image card in ClipSync to copy it right back into the system clipboard ready to paste into Discord, Slack, Photoshop, Word, or browsers.
+- 📑 **Desktop Pagination & Lazy Loading**: Browse through 10,000 clips effortlessly. Use the dedicated pagination toolbar (`⏮ First`, `◀ Prev`, `Page X / Y`, `Next ▶`, `⏭ Last`) or simply scroll down to lazy-load additional chunks on demand.
+- 🔍 **Real-Time Deep Search**: Filter through all 10,000 text and image clips instantly as you type (`Ctrl + F`). Search supports text strings, dimensions (`1920x1080`), and keywords (`image`, `photo`, `screenshot`).
+- 💾 **Intelligent Debounced I/O**: Eliminates disk freeze by batching updates asynchronously every 1 second, with a synchronous fail-safe save on app exit.
+- 🧹 **Automatic Disk Cleanup**: Deleting an image clip or clearing history automatically deletes orphaned image files from your computer.
 
-### ⌨️ Keyboard Shortcuts
-
-```
-Ctrl + Shift + V    →    Show/Hide Window
-Ctrl + F            →    Focus Search Bar
-Escape              →    Close Menus/Modals
-```
+<br/>
 
 ---
 
-## 📥 Download
+## 🖥️ Application Preview & Architecture
 
-### For End Users
-
-Download the Windows Installer:
-
-#### Windows Installer (Recommended)
 ```
-🔧 RYZClipSync-Setup-1.0.3.exe
+┌─────────────────────────────────────────────────────────────┐
+│  🟢 🟡 🔴  RYZ ClipSync [v1.0.3]               [📌] [_] [✕] │
+├─────────────────────────────────────────────────────────────┤
+│  🔍 Search clipboard (Ctrl + F)...                          │
+├─────────────────────────────────────────────────────────────┤
+│  🟢 MONITORING ACTIVE   [ 10,000 Items ]   [Auto: ON]  [🗑️] │
+├─────────────────────────────────────────────────────────────┤
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ #1  🖼️ IMAGE  1920×1080                         Now   │  │
+│  │     [════════════ Preview Thumbnail ════════════]     │  │
+│  │                                            [TAP COPY] │  │
+│  ├───────────────────────────────────────────────────────┤  │
+│  │ #2  git commit -m "feat: add pagination engine"   2m  │  │
+│  │                                            [TAP COPY] │  │
+│  └───────────────────────────────────────────────────────┘  │
+├─────────────────────────────────────────────────────────────┤
+│  Showing 1–50 of 10,000     [⏮] [◀] [ Page 1 / 200 ] [▶] [⏭] │
+└─────────────────────────────────────────────────────────────┘
 ```
-- ✅ Professional installation
-- ✅ Creates Start Menu shortcuts
-- ✅ Auto-updates ready (future)
-- ✅ Uninstall support
-- 📍 Download: `[Link to .exe installer]`
+
+<br/>
 
 ---
 
-## 🚀 Installation
+## ⌨️ Keyboard Shortcuts
 
-### Using the Installer (Recommended)
+| Shortcut | Action | Description |
+|:---|:---:|:---|
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>V</kbd> | **Toggle Window** | Show or hide the main ClipSync window anywhere |
+| <kbd>Ctrl</kbd> + <kbd>F</kbd> | **Focus Search** | Instantly jump cursor to the real-time search input |
+| <kbd>Esc</kbd> | **Dismiss** | Close active modals, context menus, or tray popups |
+| **Double-Click** | **Copy Clip** | Copy text or image directly to clipboard with toast alert |
+| **Right-Click** | **Context Menu** | Open quick action menu for Copy or Delete |
 
-1. **Download** `RYZClipSync-Setup-1.0.3.exe`
-2. **Run** the installer
-3. **Follow** the installation wizard
-4. **Launch** from Start Menu or Desktop shortcut
-
-### First Run
-
-On first launch:
-- App will appear in system tray (near clock)
-- A welcome notification will appear
-- Start copying text - it's automatically saved!
-- Double-click tray icon to open main window
+<br/>
 
 ---
 
-## ⚡ Quick Start
+## 📥 Download & Installation
 
-```
-1. Install the application
-2. Launch RYZ ClipSync
-3. Copy any text (Ctrl + C)
-4. Open the app to see your clipboard history
-5. Double-click any item to copy it again
-6. Use system tray for quick access
-```
+### Windows Installer (Recommended)
 
-**That's it!** The app runs silently in the background, capturing everything you copy.
+[![Download RYZ ClipSync](https://img.shields.io/badge/Download-RYZ%20ClipSync%20Setup%201.0.3.exe-00ff88?style=for-the-badge&logo=windows&logoColor=000&labelColor=111111)](https://github.com/riyazalsodie/RYZ-ClipSync/releases/download/1.0.3/RYZ.ClipSync.Setup.1.0.3.exe)
 
----
+1. Download **[RYZ.ClipSync.Setup.1.0.3.exe](https://github.com/riyazalsodie/RYZ-ClipSync/releases/download/1.0.3/RYZ.ClipSync.Setup.1.0.3.exe)**.
+2. Run the installer and complete the setup wizard.
+3. Launch from the Start Menu or Desktop shortcut.
+4. ClipSync will dock in your system tray ready to capture clips silently.
 
-## 📖 User Guide
-
-### Main Window
-
-| Element | Function |
-|---------|----------|
-| **Search Bar** | Type to filter clipboard history |
-| **Item List** | Shows all copied text with timestamps |
-| **Auto Toggle** | Enable/disable Windows auto-startup |
-| **Clear Button** | Delete all history (with confirmation) |
-| **Status Dot** | Green = monitoring, Gray = paused |
-
-### Managing Clipboard Items
-
-#### To Copy an Item:
-- **Double-click** any item in the list
-- **Right-click** → Select "Copy"
-- From **system tray** → Recent Clips → Choose item
-
-#### To Delete Items:
-- **Single item**: Right-click → Delete
-- **All items**: Click "Clear" button → Confirm
-
-#### To Search:
-1. Click search bar or press `Ctrl + F`
-2. Type your search term
-3. Results filter in real-time
-4. Clear search to see all items
-
-### System Tray Menu
-
-Right-click the tray icon for:
-
-```
-📋  Open RYZ ClipSync      → Show main window
-📋  Copy Latest            → Copy most recent item
-─────────────────────────────────────────────────
-📌  Recent Clips           → Submenu with last 5 items
-─────────────────────────────────────────────────
-📊  X items in history     → Status (info only)
-⏸️  Pause Monitoring       → Toggle clipboard capture
-─────────────────────────────────────────────────
-🗑️  Clear All History      → Delete everything
-🔄  Auto Startup           → Toggle Windows startup
-─────────────────────────────────────────────────
-❌  Quit RYZ ClipSync      → Exit application
-```
-
-### Settings & Preferences
-
-| Setting | Location | Options |
-|---------|----------|---------|
-| **Auto Startup** | Toggle in app or tray | On / Off |
-| **Monitoring** | Toggle in tray | Active / Paused |
-| **Theme** | Hardcoded | OLED Black (default) |
+<br/>
 
 ---
 
-## 🛠️ Developer Guide
-
-### For Developers Who Want to Modify
-
-#### Prerequisites
+## 🚀 Quick Start
 
 ```bash
-✅ Node.js 18.x or higher
-✅ npm 9.x or higher
-✅ Git (optional, for cloning)
-✅ Windows 10/11
+# 1. Install & launch RYZ ClipSync
+# 2. Copy any text or take a screenshot (Ctrl + C / Win + Shift + S)
+# 3. Press Ctrl + Shift + V or click the tray icon to view your history
+# 4. Double-click any card to copy it back to your clipboard
 ```
 
-#### Project Structure
-
-```
-RYZ ClipSync/
-│
-├── 📄 main.js              # Main Electron process
-│   ├── Clipboard monitoring
-│   ├── System tray management
-│   ├── IPC handlers
-│   └── Data persistence
-│
-├── 📄 preload.js           # Secure bridge between main & renderer
-│
-├── 📄 index.html           # UI, styles, and frontend logic
-│   ├── CSS styling (OLED theme)
-│   ├── HTML structure
-│   └── JavaScript (UI interactions)
-│
-├── 📄 package.json         # Project configuration
-│
-├── 🖼️  icon.png             # Application icon (256x256 recommended)
-│
-├── 📄 README.md            # Documentation
-│
-└── 📁 dist/                # Built executables (after build)
-    └── RYZClipSync-Setup-1.0.2.exe    (Installer)
-```
-
-#### Configuration Files
-
-**`package.json`** - Project metadata and build config:
-```json
-{
-  "name": "clipboard-manager",
-  "version": "1.0.0",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron .",
-    "build": "electron-builder"
-  },
-  "build": {
-    "appId": "com.clipboard.manager",
-    "win": {
-      "target": "nsis",
-      "icon": null
-    }
-  }
-}
-```
+<br/>
 
 ---
 
-## 🔨 Building from Source
+## ⚡ Performance & Architecture
 
-### Step 1: Clone or Download
+| Metric | Specification | Benchmark / Target |
+|:---|:---|:---|
+| **Storage Engine** | JSON + Disk Cache | Up to **10,000 items** without lag |
+| **Active DOM Nodes** | Virtualized / Paginated | Only **50 items** rendered per page |
+| **Frame Rate** | Hardware Accelerated | Consistent **60–120 FPS** smooth scroll |
+| **Memory Footprint** | Optimized Chromium V8 | **~40–60 MB** idle RAM |
+| **CPU Utilization** | Event-Driven Polling | **< 0.5%** CPU usage |
+| **Disk Write Strategy** | Debounced Asynchronous | **1.0 second** debounce batching |
+
+<br/>
+
+---
+
+## 🛠️ Building from Source
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18.x or v20.x+)
+- `npm` (v9.x+)
+- Windows 10/11 environment
+
+### Instructions
 
 ```bash
-# Using Git
-git clone <repository-url>
-cd "RYZ ClipSync"
+# Clone the repository
+git clone https://github.com/riyazalsodie/RYZ-ClipSync.git
+cd RYZ-ClipSync
 
-# Or download ZIP and open
-cd "e:\Backup sync"
-```
-
-### Step 2: Install Dependencies
-
-```bash
+# Install dependencies
 npm install
-```
 
-### Step 3: Test in Development Mode
-
-```bash
+# Run in development mode
 npm start
-```
 
-### Step 4: Build Executables
-
-#### Build Installer (.exe Setup)
-```bash
+# Compile and package production installer (.exe)
 npm run build
 ```
 
-Output: `dist/RYZClipSync-Setup-1.0.2.exe`
+The output executable will be created in `dist/RYZ ClipSync Setup 1.0.3.exe`.
 
-### Build Configuration
-
-**For NSIS Installer** (default):
-- Creates professional setup wizard
-- Adds Start Menu entries
-- Creates desktop shortcut
-- Includes uninstaller
-
-### Customizing the Build
-
-Edit `package.json`:
-
-```json
-"build": {
-  "appId": "com.ryz.clipSync",
-  "productName": "RYZ ClipSync",
-  "win": {
-    "target": [
-      {
-        "target": "nsis",
-        "arch": ["x64"]
-      }
-    ],
-    "icon": "icon.png",
-    "artifactName": "RYZClipSync-Setup-${version}.${ext}"
-  },
-  "nsis": {
-    "oneClick": false,
-    "allowToChangeInstallationDirectory": true,
-    "createDesktopShortcut": true,
-    "createStartMenuShortcut": true
-  }
-}
-```
+<br/>
 
 ---
 
-## 🐛 Troubleshooting
+## 🔒 Privacy & Security
 
-### Common Issues
+- 🛡️ **100% Offline & Private**: Zero cloud servers, zero analytics, zero telemetry.
+- 📁 **Local Storage Only**: All history is stored strictly on your local machine inside `%APPDATA%\ryz-clipsync`.
+- 🔐 **Isolated Electron Architecture**: `contextIsolation: true`, `nodeIntegration: false`, and strict IPC channels.
 
-#### App Won't Start
-```bash
-# Solution: Reinstall dependencies
-rm -rf node_modules package-lock.json
-npm install
-npm start
-```
-
-#### Clipboard Not Capturing
-- ✅ Check if monitoring is paused (green dot = active)
-- ✅ Restart the application
-- ✅ Ensure app has necessary permissions
-
-#### History Not Saving
-- ✅ Check disk space
-- ✅ Verify `%APPDATA%` folder is accessible
-- ✅ Delete `clipboard_history.json` and restart
-
-#### System Tray Icon Missing
-- ✅ Check hidden icons (click ^ near tray)
-- ✅ Restart Windows Explorer
-- ✅ Reboot system
-
-#### Build Fails
-```bash
-# Clear cache and rebuild
-npm cache clean --force
-rm -rf node_modules dist
-npm install
-npm run build
-```
-
-### Error Codes
-
-| Error | Solution |
-|-------|----------|
-| `MODULE_NOT_FOUND` | Run `npm install` |
-| `EACCES` | Run as Administrator |
-| `ENOSPC` | Free up disk space |
-| `Electron not found` | Reinstall Electron: `npm install electron` |
+<br/>
 
 ---
 
-## ❓ FAQ
+## 📬 Support & Community
 
-**Q: Does this work on macOS or Linux?**  
-A: Currently Windows only. Cross-platform support may come in future versions.
+- 🐛 **Found a bug?** Open an issue on [GitHub Issues](https://github.com/riyazalsodie/RYZ-ClipSync/issues).
+- 💡 **Have a feature idea?** Start a discussion on [GitHub Discussions](https://github.com/riyazalsodie/RYZ-ClipSync/discussions).
+- ⭐ **Love ClipSync?** Give this repository a star on GitHub!
 
-**Q: How much disk space does history use?**  
-A: Depends on usage. Text is very small - even 1000 items is typically <1MB.
-
-**Q: Is my clipboard data sent anywhere?**  
-A: No. All data stays locally in `%APPDATA%` on your computer.
-
-**Q: Can I export my clipboard history?**  
-A: Not currently. History is stored in JSON format in `%APPDATA%\clipboard_history.json`.
-
-**Q: Does it start with Windows?**  
-A: Yes, enable "Auto Startup" in the app or system tray menu.
-
-**Q: How do I completely uninstall?**  
-A: Run the uninstaller (if installed via setup) or delete the folder + `%APPDATA%\clipboard_history.json`.
-
-**Q: Can I change the theme colors?**  
-A: Yes, edit CSS variables in `index.html` (see [Theme Customization](#-theme-customization)).
-
----
-
-## 🎨 Theme Customization
-
-Edit CSS custom properties in `index.html` (lines 10-30):
-
-```css
-:root {
-  /* Background Colors */
-  --bg-primary: #000000;
-  --bg-secondary: #0a0a0a;
-  --bg-card: rgba(255, 255, 255, 0.03);
-  
-  /* Accent Colors */
-  --accent: #00ff88;        /* Main green */
-  --accent-dim: #00cc6a;    /* Darker green */
-  
-  /* Text Colors */
-  --text-primary: #e8ffe8;
-  --text-secondary: rgba(232, 255, 232, 0.55);
-  --text-muted: rgba(232, 255, 232, 0.3);
-  
-  /* Danger/Delete */
-  --danger: #ff4d6a;
-}
-```
-
----
-
-## 📊 Performance
-
-| Metric | Value |
-|--------|-------|
-| **Memory Usage** | ~50-80 MB |
-| **CPU Usage** | <1% (idle) |
-| **Startup Time** | <2 seconds |
-| **History Limit** | 500 items |
-| **Monitor Interval** | 1 second |
-| **File Size** | ~80 MB (installed) |
-
----
-
-## 🔒 Security & Privacy
-
-- ✅ **Local Storage Only** - No cloud, no servers
-- ✅ **Context Isolation** - Electron security best practices
-- ✅ **No Node Integration** - Renderer process isolated
-- ✅ **Secure IPC** - Preload script for communication
-- ✅ **No Telemetry** - No data collection
-
----
-
-## 🤝 Contributing
-
-Contributions welcome! To contribute:
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
-
----
-
-## 📄 License
-
-```
-MIT License
-
-Copyright (c) 2026 R ! Y 4 Z
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
----
-
-## 📬 Support
-
-### Need Help?
-
-- 📖 Read this README thoroughly
-- 🐛 Report bugs via GitHub Issues
-- 💡 Request features via GitHub Discussions
-- 📧 Contact: `[Your Contact Here]`
-
-### Show Your Support
-
-If RYZ ClipSync helps you, please:
-
-- ⭐ **Star** this repository
-- 📢 **Share** with others who might benefit
-- 🐛 **Report** bugs to help improve
-- 💡 **Suggest** features for future versions
-
----
-
-## 🙏 Acknowledgments
-
-- **[Electron](https://www.electronjs.org/)** - Cross-platform desktop apps
-- **[Google Fonts](https://fonts.google.com/)** - Inter font family
-- **[Electron Builder](https://www.electron.build/)** - Packaging and distribution
-- **Community** - Inspiration and support
+<br/>
 
 ---
 
 <div align="center">
 
-## 🎯 Ready to Get Started?
-
-[Download Now](#-download) • [View Source](#) • [Report Issue](#)
-
----
+<img src="logo.png" width="70" height="70" alt="RYZ ClipSync Logo" style="border-radius: 50%; box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);" />
 
 ### **RYZ ClipSync**
 
-*Your clipboard, elevated.*
+*Your clipboard, elevated to cyber speed.*
 
----
+Developed with ❤️ by **[R ! Y 4 Z](https://github.com/riyazalsodie)**
 
-###### Developed with ❤️ by **R ! Y 4 Z**
-
-###### Version 1.0.2 | Last Updated: 2026
+Licensed under the [MIT License](LICENSE)
 
 </div>
