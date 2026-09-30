@@ -1,6 +1,6 @@
 {
   "name": "ryz-clipsync",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "RYZ ClipSync — A premium clipboard manager with search, persistence, and system tray",
   "main": "main.js",
   "scripts": {

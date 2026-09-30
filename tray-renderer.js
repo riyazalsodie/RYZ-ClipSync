@@ -12,7 +12,12 @@ document.querySelector('.action-open').addEventListener('click', () => {
 document.querySelector('.action-copy-latest').addEventListener('click', async () => {
     const history = await window.electronAPI.getClipboardHistory();
     if (history.length > 0) {
-        window.electronAPI.copyText(history[0].text);
+        const latest = history[0];
+        if (latest.type === 'image') {
+            await window.electronAPI.copyImage(latest.imagePath || latest.thumbnail);
+        } else {
+            await window.electronAPI.copyText(latest.text);
+        }
     }
     window.electronAPI.closeWindow();
 });
@@ -56,14 +61,23 @@ async function updateTrayUI(passedHistory) {
     history.slice(0, 5).forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'recent-item';
-        const preview = item.text.length > 35
-            ? item.text.substring(0, 35).replace(/\n/g, ' ') + '...'
-            : item.text.replace(/\n/g, ' ');
-        div.textContent = `${index + 1}. ${preview}`;
-        div.onclick = () => {
-            window.electronAPI.copyText(item.text);
-            window.electronAPI.closeWindow();
-        };
+        if (item.type === 'image') {
+            const dim = item.width && item.height ? ` (${item.width}×${item.height})` : '';
+            div.textContent = `${index + 1}. 🖼️ [Image]${dim}`;
+            div.onclick = async () => {
+                await window.electronAPI.copyImage(item.imagePath || item.thumbnail);
+                window.electronAPI.closeWindow();
+            };
+        } else {
+            const preview = item.text.length > 35
+                ? item.text.substring(0, 35).replace(/\n/g, ' ') + '...'
+                : item.text.replace(/\n/g, ' ');
+            div.textContent = `${index + 1}. ${preview}`;
+            div.onclick = async () => {
+                await window.electronAPI.copyText(item.text);
+                window.electronAPI.closeWindow();
+            };
+        }
         recentItemsList.appendChild(div);
     });
 

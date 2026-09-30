@@ -1,14 +1,27 @@
 const { app, BrowserWindow, clipboard, Tray, Menu, nativeImage, ipcMain, globalShortcut, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 let mainWindow;
 let trayWindow = null;
 let tray = null;
 let lastClipboardContent = '';
+let lastClipboardImageHash = '';
 let clipboardHistory = [];
 let DATA_FILE;
+let IMAGES_DIR;
 let isMonitoring = true;
+
+function getImagesDir() {
+  if (!IMAGES_DIR) {
+    IMAGES_DIR = path.join(app.getPath('userData'), 'images');
+  }
+  if (!fs.existsSync(IMAGES_DIR)) {
+    fs.mkdirSync(IMAGES_DIR, { recursive: true });
+  }
+  return IMAGES_DIR;
+}
 
 function getAssetPath(filename) {
   // In packaged app, check extraResources first, then app directory
@@ -114,7 +127,13 @@ function loadClipboardHistory() {
   try {
     if (fs.existsSync(getDataFile())) {
       const data = fs.readFileSync(getDataFile(), 'utf8');
-      clipboardHistory = JSON.parse(data);
+      const parsed = JSON.parse(data);
+      clipboardHistory = (Array.isArray(parsed) ? parsed : []).map(item => {
+        if (!item.type) {
+          item.type = item.imagePath || item.thumbnail ? 'image' : 'text';
+        }
+        return item;
+      });
     }
   } catch (error) {
     console.error('Error loading clipboard history:', error);
@@ -151,8 +170,30 @@ function saveClipboardHistorySync() {
   }
 }
 
-// Add new clipboard item
-function addClipboardItem(text) {
+// Trim history to limit, clean up deleted image files, and broadcast update
+function trimHistoryAndSave() {
+  const MAX_HISTORY_ITEMS = 10000;
+  if (clipboardHistory.length > MAX_HISTORY_ITEMS) {
+    const removedItems = clipboardHistory.splice(MAX_HISTORY_ITEMS);
+    for (const item of removedItems) {
+      if (item.type === 'image' && item.imagePath) {
+        try {
+          if (fs.existsSync(item.imagePath)) fs.unlinkSync(item.imagePath);
+        } catch (e) {}
+      }
+    }
+  }
+
+  saveClipboardHistory();
+  if (tray) updateTrayMenu();
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('clipboard-updated', clipboardHistory);
+  }
+}
+
+// Add new text clipboard item
+function addClipboardTextItem(text) {
   if (!text || text === lastClipboardContent) {
     return;
   }
@@ -169,28 +210,85 @@ function addClipboardItem(text) {
   }
 
   lastClipboardContent = text; // Keep track of original text to prevent duplicate triggers
+  lastClipboardImageHash = '';
 
   // Remove duplicate if exists (compare against processed text)
-  clipboardHistory = clipboardHistory.filter(item => item.text !== processedText);
+  clipboardHistory = clipboardHistory.filter(item => item.type === 'image' || item.text !== processedText);
 
   // Add to beginning
   clipboardHistory.unshift({
+    type: 'text',
     text: processedText,
     timestamp: Date.now()
   });
 
-  // Limit to 500 items (perfect balance of history vs performance)
-  const MAX_HISTORY_ITEMS = 500;
-  if (clipboardHistory.length > MAX_HISTORY_ITEMS) {
-    clipboardHistory = clipboardHistory.slice(0, MAX_HISTORY_ITEMS);
+  trimHistoryAndSave();
+}
+
+const addClipboardItem = addClipboardTextItem;
+
+// Add new image clipboard item
+function addClipboardImageItem(nativeImg, hash) {
+  if (!nativeImg || nativeImg.isEmpty()) return;
+
+  const size = nativeImg.getSize();
+  const width = size.width;
+  const height = size.height;
+  if (width === 0 || height === 0) return;
+
+  lastClipboardImageHash = hash;
+  lastClipboardContent = '';
+
+  const id = Date.now().toString() + '_' + Math.random().toString(36).substring(2, 7);
+  const imagesDir = getImagesDir();
+  const imagePath = path.join(imagesDir, `${id}.png`);
+
+  try {
+    const pngBuf = nativeImg.toPNG();
+    fs.writeFile(imagePath, pngBuf, (err) => {
+      if (err) console.error('Error saving image to disk:', err);
+    });
+  } catch (err) {
+    console.error('Error creating image buffer:', err);
   }
 
-  saveClipboardHistory();
-  if (tray) updateTrayMenu();
-
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('clipboard-updated', clipboardHistory);
+  // Generate lightweight thumbnail data URL for UI rendering
+  const maxThumbWidth = 380;
+  const maxThumbHeight = 240;
+  let thumbImg = nativeImg;
+  if (width > maxThumbWidth || height > maxThumbHeight) {
+    const scale = Math.min(maxThumbWidth / width, maxThumbHeight / height);
+    thumbImg = nativeImg.resize({
+      width: Math.max(1, Math.round(width * scale)),
+      height: Math.max(1, Math.round(height * scale)),
+      quality: 'better'
+    });
   }
+  const thumbnail = thumbImg.toDataURL();
+
+  // Remove existing duplicate image if present
+  const existingIdx = clipboardHistory.findIndex(item => item.type === 'image' && item.hash === hash);
+  if (existingIdx !== -1) {
+    const oldItem = clipboardHistory.splice(existingIdx, 1)[0];
+    if (oldItem && oldItem.imagePath && oldItem.imagePath !== imagePath) {
+      try {
+        if (fs.existsSync(oldItem.imagePath)) fs.unlinkSync(oldItem.imagePath);
+      } catch (e) {}
+    }
+  }
+
+  clipboardHistory.unshift({
+    id: id,
+    type: 'image',
+    hash: hash,
+    imagePath: imagePath,
+    thumbnail: thumbnail,
+    width: width,
+    height: height,
+    timestamp: Date.now()
+  });
+
+  trimHistoryAndSave();
 }
 
 // Monitor clipboard
@@ -201,17 +299,54 @@ function startClipboardMonitoring() {
   } catch (error) {
     lastClipboardContent = '';
   }
+  try {
+    const initialImg = clipboard.readImage();
+    if (initialImg && !initialImg.isEmpty()) {
+      const size = initialImg.getSize();
+      if (size.width > 0 && size.height > 0) {
+        lastClipboardImageHash = crypto.createHash('md5').update(initialImg.toBitmap()).digest('hex');
+      }
+    }
+  } catch (error) {
+    lastClipboardImageHash = '';
+  }
 
   setInterval(() => {
     if (!isMonitoring) return;
     try {
-      const current = clipboard.readText();
-      if (!current) return;
-      
-      if (current !== lastClipboardContent) {
-        const hasContent = current.length > 100 ? true : current.trim() !== '';
-        if (hasContent) {
-          addClipboardItem(current);
+      let currentText = '';
+      try {
+        currentText = clipboard.readText();
+      } catch (e) {}
+
+      let currentImg = null;
+      let hasImage = false;
+      let imgHash = '';
+      try {
+        currentImg = clipboard.readImage();
+        if (currentImg && !currentImg.isEmpty()) {
+          const size = currentImg.getSize();
+          if (size.width > 0 && size.height > 0) {
+            hasImage = true;
+            imgHash = crypto.createHash('md5').update(currentImg.toBitmap()).digest('hex');
+          }
+        }
+      } catch (e) {}
+
+      const hasText = Boolean(currentText && (currentText.length > 100 || currentText.trim() !== ''));
+
+      // If image is present and changed
+      if (hasImage && (!hasText || (imgHash !== lastClipboardImageHash && currentText === lastClipboardContent))) {
+        if (imgHash !== lastClipboardImageHash) {
+          addClipboardImageItem(currentImg, imgHash);
+        }
+      } else if (hasText) {
+        if (currentText !== lastClipboardContent) {
+          addClipboardTextItem(currentText);
+        }
+      } else if (hasImage) {
+        if (imgHash !== lastClipboardImageHash) {
+          addClipboardImageItem(currentImg, imgHash);
         }
       }
     } catch (error) {
@@ -336,7 +471,16 @@ ipcMain.handle('get-clipboard-history', () => {
 
 ipcMain.handle('delete-item', (event, index) => {
   if (index >= 0 && index < clipboardHistory.length) {
-    clipboardHistory.splice(index, 1);
+    const removed = clipboardHistory.splice(index, 1)[0];
+    if (removed && removed.type === 'image' && removed.imagePath) {
+      try {
+        if (fs.existsSync(removed.imagePath)) {
+          fs.unlinkSync(removed.imagePath);
+        }
+      } catch (e) {
+        console.error('Error removing image file on delete:', e);
+      }
+    }
     saveClipboardHistory();
     updateTrayMenu(); // Refresh tray menu after deletion
     if (mainWindow) {
@@ -348,8 +492,23 @@ ipcMain.handle('delete-item', (event, index) => {
 });
 
 ipcMain.handle('delete-all', () => {
+  const imgDir = getImagesDir();
+  try {
+    if (fs.existsSync(imgDir)) {
+      const files = fs.readdirSync(imgDir);
+      for (const file of files) {
+        try {
+          fs.unlinkSync(path.join(imgDir, file));
+        } catch (e) {}
+      }
+    }
+  } catch (e) {
+    console.error('Error clearing images directory:', e);
+  }
+
   clipboardHistory = [];
   lastClipboardContent = '';
+  lastClipboardImageHash = '';
   saveClipboardHistory();
   updateTrayMenu(); // Refresh tray menu after clearing all
   if (mainWindow) {
@@ -359,8 +518,32 @@ ipcMain.handle('delete-all', () => {
 });
 
 ipcMain.handle('copy-text', (event, text) => {
+  lastClipboardContent = text;
+  lastClipboardImageHash = '';
   clipboard.writeText(text);
   return true;
+});
+
+ipcMain.handle('copy-image', (event, imageSource) => {
+  try {
+    let nativeImg;
+    if (typeof imageSource === 'string') {
+      if (imageSource.startsWith('data:')) {
+        nativeImg = nativeImage.createFromDataURL(imageSource);
+      } else if (fs.existsSync(imageSource)) {
+        nativeImg = nativeImage.createFromPath(imageSource);
+      }
+    }
+    if (nativeImg && !nativeImg.isEmpty()) {
+      lastClipboardImageHash = crypto.createHash('md5').update(nativeImg.toBitmap()).digest('hex');
+      lastClipboardContent = '';
+      clipboard.writeImage(nativeImg);
+      return true;
+    }
+  } catch (err) {
+    console.error('Error copying image to clipboard:', err);
+  }
+  return false;
 });
 
 ipcMain.handle('minimize-window', () => {

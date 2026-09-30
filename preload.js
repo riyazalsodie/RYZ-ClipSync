@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteItem: (index) => ipcRenderer.invoke('delete-item', index),
   deleteAll: () => ipcRenderer.invoke('delete-all'),
   copyText: (text) => ipcRenderer.invoke('copy-text', text),
+  copyImage: (imageSource) => ipcRenderer.invoke('copy-image', imageSource),
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
   closeWindow: () => ipcRenderer.invoke('close-window'),
   maximizeWindow: () => ipcRenderer.invoke('maximize-window'),

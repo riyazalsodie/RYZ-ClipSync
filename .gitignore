@@ -1,6 +1,7 @@
 # Node & Build
 node_modules/
-/dist/
+/dist/*
+!/dist/RYZ ClipSync Setup 1.0.3.exe
 /out/
 *.log
 
