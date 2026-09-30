@@ -11,7 +11,7 @@
 ![Electron](https://img.shields.io/badge/Electron-28.0.0-47848F?style=flat-square&logo=electron&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Windows-00ff88?style=flat-square&logo=windows&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-00ff88?style=flat-square)
-![Version](https://img.shields.io/badge/Version-1.0.0-00ff88?style=flat-square)
+![Version](https://img.shields.io/badge/Version-1.0.2-00ff88?style=flat-square)
 
 ---
 
@@ -54,7 +54,7 @@ Whether you're a developer, designer, writer, or anyone who copies frequently, C
 
 | Feature | Description |
 |---------|-------------|
-| **📌 Persistent History** | Stores up to 1000 clipboard items locally, surviving restarts |
+| **📌 Persistent History** | Stores up to 500 clipboard items locally, surviving restarts |
 | **🔍 Smart Search** | Real-time filtering to find any copied text instantly |
 | **⚡ Auto-Monitoring** | Captures clipboard changes every 1 second automatically |
 | **💾 Auto-Save** | All history saved instantly to disk, no data loss |
@@ -95,7 +95,7 @@ Download the Windows Installer:
 
 #### Windows Installer (Recommended)
 ```
-🔧 RYZClipSync-Setup-1.0.0.exe
+🔧 RYZClipSync-Setup-1.0.2.exe
 ```
 - ✅ Professional installation
 - ✅ Creates Start Menu shortcuts
@@ -109,7 +109,7 @@ Download the Windows Installer:
 
 ### Using the Installer (Recommended)
 
-1. **Download** `RYZClipSync-Setup-1.0.0.exe`
+1. **Download** `RYZClipSync-Setup-1.0.2.exe`
 2. **Run** the installer
 3. **Follow** the installation wizard
 4. **Launch** from Start Menu or Desktop shortcut
@@ -235,7 +235,7 @@ RYZ ClipSync/
 ├── 📄 README.md            # Documentation
 │
 └── 📁 dist/                # Built executables (after build)
-    └── RYZClipSync-Setup-1.0.0.exe    (Installer)
+    └── RYZClipSync-Setup-1.0.2.exe    (Installer)
 ```
 
 #### Configuration Files
@@ -294,7 +294,7 @@ npm start
 npm run build
 ```
 
-Output: `dist/RYZClipSync-Setup-1.0.0.exe`
+Output: `dist/RYZClipSync-Setup-1.0.2.exe`
 
 ### Build Configuration
 
@@ -439,7 +439,7 @@ Edit CSS custom properties in `index.html` (lines 10-30):
 | **Memory Usage** | ~50-80 MB |
 | **CPU Usage** | <1% (idle) |
 | **Startup Time** | <2 seconds |
-| **History Limit** | 1000 items |
+| **History Limit** | 500 items |
 | **Monitor Interval** | 1 second |
 | **File Size** | ~80 MB (installed) |
 
@@ -540,6 +540,6 @@ If RYZ ClipSync helps you, please:
 
 ###### Developed with ❤️ by **R ! Y 4 Z**
 
-###### Version 1.0.0 | Last Updated: 2024
+###### Version 1.0.2 | Last Updated: 2026
 
 </div>
