@@ -11,7 +11,7 @@
 ![Electron](https://img.shields.io/badge/Electron-28.0.0-47848F?style=flat-square&logo=electron&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Windows-00ff88?style=flat-square&logo=windows&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-00ff88?style=flat-square)
-![Version](https://img.shields.io/badge/Version-1.0.2-00ff88?style=flat-square)
+![Version](https://img.shields.io/badge/Version-1.0.3-00ff88?style=flat-square)
 
 ---
 
@@ -42,7 +42,7 @@
 
 ## 🌟 Overview
 
-**RYZ ClipSync** is a sleek, modern clipboard manager designed for Windows that keeps track of everything you copy. With its elegant OLED-black theme and powerful system tray integration, you'll never lose important copied text again.
+**RYZ ClipSync** is a sleek, modern clipboard manager designed for Windows that keeps track of everything you copy. With its elegant OLED-black theme and powerful system tray integration, you'll never lose important copied text or images again.
 
 Whether you're a developer, designer, writer, or anyone who copies frequently, ClipSync streamlines your workflow by keeping your clipboard history organized, searchable, and instantly accessible.
 
@@ -54,11 +54,13 @@ Whether you're a developer, designer, writer, or anyone who copies frequently, C
 
 | Feature | Description |
 |---------|-------------|
-| **📌 Persistent History** | Stores up to 500 clipboard items locally, surviving restarts |
-| **🔍 Smart Search** | Real-time filtering to find any copied text instantly |
+| **📌 Persistent History** | Stores up to 10,000 clipboard items locally, surviving restarts |
+| **🖼️ Image Clipboard Support** | Captures screenshots & copied images with thumbnails and instant copying |
+| **📑 Pagination & Lazy Load** | Smooth 50-item pages and infinite scroll for 60+ FPS zero-lag browsing |
+| **🔍 Smart Search** | Real-time filtering across all 10,000 items with instant matches |
 | **⚡ Auto-Monitoring** | Captures clipboard changes every 1 second automatically |
 | **💾 Auto-Save** | All history saved instantly to disk, no data loss |
-| **🔄 Duplicate Prevention** | Intelligently handles duplicate entries |
+| **🔄 Duplicate Prevention** | Intelligently handles duplicate entries via hashing |
 
 ### 🎨 User Interface
 
@@ -95,7 +97,7 @@ Download the Windows Installer:
 
 #### Windows Installer (Recommended)
 ```
-🔧 RYZClipSync-Setup-1.0.2.exe
+🔧 RYZClipSync-Setup-1.0.3.exe
 ```
 - ✅ Professional installation
 - ✅ Creates Start Menu shortcuts
@@ -109,7 +111,7 @@ Download the Windows Installer:
 
 ### Using the Installer (Recommended)
 
-1. **Download** `RYZClipSync-Setup-1.0.2.exe`
+1. **Download** `RYZClipSync-Setup-1.0.3.exe`
 2. **Run** the installer
 3. **Follow** the installation wizard
 4. **Launch** from Start Menu or Desktop shortcut
