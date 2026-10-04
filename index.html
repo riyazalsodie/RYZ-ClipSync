@@ -56,6 +56,7 @@
     .container {
       width: 100vw;
       height: 100vh;
+      position: relative;
       background: var(--bg-primary);
       border-radius: var(--radius-xl);
       display: flex;
@@ -194,33 +195,108 @@
       box-shadow: 0 0 10px rgba(255, 95, 87, 0.5);
     }
 
-    .win-dot.dot-pin {
-      background: rgba(255, 255, 255, 0.08);
+    .window-controls .win-dot.dot-settings {
+      /* Same muted plate as the pin dot; separated by the existing spacing. */
+      background: rgba(255, 255, 255, 0.12);
       margin-right: 4px;
     }
 
-    .win-dot.dot-pin:hover {
+    .window-controls .win-dot.dot-settings:hover {
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+    }
+
+    .window-controls .win-dot.dot-settings svg {
+      width: 12px;
+      height: 12px;
+      /* Font Awesome gear is a filled glyph, so `fill` not `stroke`. It must stay
+         legible on the near-black plate, so it uses the light text colour. */
+      fill: var(--text-secondary);
+      stroke: none;
+      opacity: 1;
+      /* The transform origin matters: the gear spins around its centre hole,
+         not a corner. */
+      transform-origin: 50% 50%;
+      transition: fill 0.2s ease;
+    }
+
+    .window-controls .win-dot.dot-settings:hover svg {
+      fill: var(--accent);
+    }
+
+    /* Click-to-close: the gear spins a quarter turn while the panel opens, and
+       spins back when it closes. A keyframe animation is used rather than a
+       transition so it replays on every click regardless of current state. */
+    .window-controls .win-dot.dot-settings.spin-in svg {
+      animation: gearSpin 0.42s cubic-bezier(0.34, 1.4, 0.5, 1) both;
+    }
+
+    .window-controls .win-dot.dot-settings.spin-out svg {
+      animation: gearSpinBack 0.42s cubic-bezier(0.34, 1.4, 0.5, 1) both;
+    }
+
+    @keyframes gearSpin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(90deg);
+      }
+    }
+
+    @keyframes gearSpinBack {
+      from {
+        transform: rotate(90deg);
+      }
+      to {
+        transform: rotate(0deg);
+      }
+    }
+
+    /* Keeps the resting angle once the spin has finished, so the icon does not
+       snap back between clicks. */
+    .window-controls .win-dot.dot-settings.open svg {
+      transform: rotate(90deg);
+    }
+
+    .window-controls .win-dot.dot-pin {
+      /* Slightly lighter than the other window controls so the pin glyph reads
+         against it even when inactive. */
+      background: rgba(255, 255, 255, 0.12);
+      margin-right: 4px;
+    }
+
+    .window-controls .win-dot.dot-pin:hover {
       background: rgba(255, 255, 255, 0.15);
       box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
     }
 
-    .win-dot.dot-pin.active {
+    .window-controls .win-dot.dot-pin.active {
       background: var(--accent);
       box-shadow: 0 0 12px var(--accent-glow-strong);
     }
 
-    .win-dot.dot-pin svg {
-      width: 8px;
-      height: 8px;
-      fill: rgba(255, 255, 255, 0.6);
+    .window-controls .win-dot.dot-pin svg {
+      width: 11px;
+      height: 11px;
+      /* Font Awesome pin is a filled glyph, so `fill` not `stroke`. The selector
+         repeats `.window-controls` to beat the generic rule above.
+         It stays visible at rest because the inactive dot is nearly black —
+         a black glyph on a black dot was completely invisible. The inactive
+         colour is a muted grey; it turns black on hover, and stays black on the
+         green active dot for contrast. */
+      fill: var(--text-muted);
       stroke: none;
       opacity: 1;
-      transition: var(--transition);
+      transition: fill 0.2s ease;
     }
 
-    .win-dot.dot-pin.active svg {
+    .window-controls .win-dot.dot-pin:hover svg {
+      fill: rgba(232, 255, 232, 0.85);
+    }
+
+    .window-controls .win-dot.dot-pin.active svg {
       fill: #000;
-      opacity: 1;
     }
 
     /* ─── Header ─── */
@@ -1023,6 +1099,68 @@
       }
     }
 
+    /* ─── Tab Bar ─── */
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      padding: 8px 12px 0;
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 9px 9px 0 0;
+      border: 1px solid transparent;
+      border-bottom: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .tab-btn:hover {
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      background: var(--accent-glow);
+      border-color: var(--border-active);
+    }
+
+    .tab-icon {
+      width: 12px;
+      height: 12px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Count pill — tabular so the number does not jitter as it changes */
+    .tab-count {
+      font-size: 10px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1px 5px;
+      border-radius: 5px;
+    }
+
+    .tab-btn.active .tab-count {
+      color: var(--accent);
+      background: rgba(0, 255, 136, 0.12);
+    }
+
     /* ─── Pagination Bar ─── */
     .pagination-bar {
       display: flex;
@@ -1056,16 +1194,27 @@
       border: 1px solid var(--border-subtle);
       color: var(--text-secondary);
       border-radius: 6px;
-      padding: 3px 7px;
-      font-size: 10px;
+      padding: 0;
       font-family: inherit;
       cursor: pointer;
       transition: var(--transition);
       display: flex;
       align-items: center;
       justify-content: center;
-      min-width: 24px;
+      min-width: 26px;
       height: 24px;
+    }
+
+    /* Chevrons are real SVG, not glyphs, so they stay crisp at any scale and
+       inherit the button colour on hover / disabled states. */
+    .page-nav-btn svg {
+      width: 13px;
+      height: 13px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .page-nav-btn:hover:not(:disabled) {
@@ -1121,7 +1270,725 @@
       color: var(--text-muted);
       font-size: 10px;
     }
+
+    /* ─── Onboarding ────────────────────────────────────────────────────
+       Full-panel takeover that respects the container radius. Three steps,
+       left-aligned (not a centred hero), with a real working control on the
+       final step instead of a dead "Next" button. */
+
+    .onboarding {
+      position: absolute;
+      /* Sits below the 48px title bar so the window controls stay reachable.
+         A full-panel takeover would trap the user with no way to close. */
+      top: 48px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      padding: 30px 28px 22px;
+      background: var(--bg-primary);
+      /* Animated via a class toggle on .show. Kept out of the flex/visibility
+         flow on purpose: transitioning `visibility` alongside a height change
+         left the panel stuck at visibility:hidden (invisible) even at opacity 1. */
+      display: none;
+    }
+
+    .onboarding.show {
+      display: flex;
+    }
+
+    /* Step rail — a hairline that fills, quieter than a row of dots */
+    .ob-rail {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 26px;
+      flex-shrink: 0;
+    }
+
+    .ob-rail span {
+      height: 2px;
+      flex: 1;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.08);
+      transition: background 0.3s var(--transition);
+    }
+
+    .ob-rail span.done {
+      background: var(--accent);
+    }
+
+    .ob-rail span.active {
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow-strong);
+    }
+
+    .ob-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .ob-step {
+      display: none;
+    }
+
+    .ob-step.active {
+      display: block;
+      animation: obStepIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes obStepIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+.ob-mark {
+      width: 54px;
+      height: 54px;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      background: rgba(0, 255, 136, 0.05);
+      border: 1px solid var(--border-active);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .ob-mark svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--accent);
+      fill: none;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .ob-mark img {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+    }
+
+    .ob-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .ob-title {
+      font-size: 21px;
+      font-weight: 600;
+      line-height: 1.25;
+      letter-spacing: -0.3px;
+      color: var(--text-primary);
+      margin-bottom: 9px;
+    }
+
+    .ob-copy {
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      max-width: 34ch;
+    }
+
+    /* Keyboard-shortcut rows, built with kbd so they read as keys not labels */
+    .ob-keys {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .ob-key-row {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .ob-key-row svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      stroke: var(--text-muted);
+      fill: none;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .ob-key-row span {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    kbd {
+      margin-left: auto;
+      display: inline-flex;
+      gap: 3px;
+      padding: 3px 7px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-hover);
+      border-bottom-width: 2px;
+      font-family: inherit;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+/* ─── Settings Panel ──────────────────────────────────────────────────
+       Slides in from the right over the list. Left-aligned rows with a
+       consistent baseline; the toggle is the only thing that moves. */
+    /* Visibility is toggled with `display` rather than opacity.
+       An opacity transition OR keyframe animation on this element never
+       advances while it sits outside the painted area — getComputedStyle stays
+       pinned at 0 and the panel is present and clickable but invisible. Toggling
+       display is unconditional, and the entrance motion is applied to the
+       inner content, which always paints. */
+    .settings-panel {
+      position: absolute;
+      top: 48px;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 45;
+      display: none;
+      flex-direction: column;
+      background: var(--bg-primary);
+    }
+
+    .settings-panel.show {
+      display: flex;
+    }
+
+    .settings-panel.show .settings-head {
+      animation: settingsIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .settings-panel.show .settings-body {
+      animation: settingsIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) 0.04s both;
+    }
+
+    @keyframes settingsIn {
+      from {
+        opacity: 0;
+        transform: translateX(10px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .settings-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .settings-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.1px;
+      color: var(--text-primary);
+    }
+
+    .settings-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 20px 22px;
+      /* The panel is its own scroll context; hide the raw scrollbar chrome so
+         it does not sit as a bright rail against the OLED black. */
+      scrollbar-width: none;
+    }
+
+    .settings-body::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+
+    .settings-group-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 18px 0 8px;
+    }
+
+    .settings-group-label:first-child {
+      margin-top: 12px;
+    }
+
+    .set-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      cursor: pointer;
+    }
+
+    .set-row:last-of-type {
+      border-bottom: none;
+    }
+
+    .set-row-block {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      cursor: default;
+    }
+
+    .set-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .set-name {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .set-desc {
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--text-muted);
+    }
+
+    /* Segmented control for retention — clearer than a dropdown for 4 options */
+    .retention-chips {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+
+    .chip {
+      padding: 7px 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .chip:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+
+    .chip.active {
+      background: var(--accent-glow);
+      border-color: var(--border-active);
+      color: var(--accent);
+    }
+
+    .settings-foot-note {
+      margin-top: 18px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 77, 106, 0.06);
+      border: 1px solid rgba(255, 77, 106, 0.2);
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .settings-panel.show {
+        animation: none;
+      }
+    }
+
+    /* Redacted clip: signals the secret was caught and never stored */
+    .clipboard-item.is-redacted {
+      border-color: rgba(255, 77, 106, 0.22);
+      background: rgba(255, 77, 106, 0.035);
+    }
+
+    .clipboard-item.is-redacted .text {
+      color: var(--text-secondary);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11.5px;
+      word-break: break-all;
+    }
+
+    .redacted-note {
+      display: block;
+      margin-top: 3px;
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.3px;
+      color: var(--danger);
+      opacity: 0.85;
+    }
+
+    /* Pinned clip: kept out of the expiry sweep and marked in the list */
+    .clipboard-item.is-pinned {
+      border-color: var(--border-active);
+      background: var(--bg-card-hover);
+    }
+
+    .pin-badge {
+      position: absolute;
+      top: 9px;
+      right: 10px;
+      display: flex;
+      z-index: 2;
+      pointer-events: none;
+      color: var(--accent);
+    }
+
+    .pin-badge svg {
+      width: 11px;
+      height: 11px;
+      stroke: var(--accent);
+      fill: none;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Merge counter for clips copied more than once */
+    .dup-count {
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+      background: var(--accent-glow);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    /* Live demo card on the tutorial step */
+    .ob-demo {
+      margin-top: 18px;
+      padding: 13px 14px 14px;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .ob-demo-head {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 10px;
+    }
+
+    .ob-demo-meta {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+
+    .ob-demo-body {
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      word-break: break-word;
+    }
+
+    /* Type tags, matching the badges used in the real history list */
+    .ob-tag {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      padding: 3px 6px;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+
+    .ob-tag-text {
+      color: var(--accent);
+      background: var(--accent-glow);
+      border: 1px solid var(--border-active);
+    }
+
+    .ob-tag-img {
+      color: #7cc4ff;
+      background: rgba(124, 196, 255, 0.1);
+      border: 1px solid rgba(124, 196, 255, 0.25);
+    }
+
+    .ob-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 15px;
+      border-radius: 9px;
+      border: 1px solid var(--border-active);
+      background: var(--accent-glow);
+      color: var(--accent);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .ob-copy-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .ob-copy-btn:hover {
+      background: rgba(0, 255, 136, 0.16);
+      transform: translateY(-1px);
+    }
+
+    .ob-copy-btn.copied {
+      color: #001a0d;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* The "it worked" payoff, revealed only after a real copy */
+    .ob-reveal {
+      margin-top: 14px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(6px);
+      transition: opacity 0.3s var(--transition), transform 0.3s var(--transition), visibility 0.3s;
+    }
+
+    .ob-reveal.show {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+    }
+
+    .ob-reveal-head {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 8px;
+    }
+
+    .ob-reveal-head .ob-eyebrow {
+      margin: 0;
+    }
+
+    .ob-reveal-tag {
+      margin-left: auto;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .ob-clip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-primary);
+      border: 1px solid var(--border-active);
+      animation: obStepIn 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .ob-clip-text {
+      font-size: 12px;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ob-swatch {
+      height: 84px;
+      border-radius: 9px;
+      background: linear-gradient(120deg, #00ff88 0%, #00a8ff 55%, #a855f7 100%);
+      border: 1px solid var(--border-hover);
+    }
+
+    .ob-dims {
+      margin-top: 9px;
+      font-size: 10.5px;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-muted);
+    }
+
+    /* Read-only value chip on the settings-preview step */
+    .ob-pill {
+      margin-left: auto;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .ob-hint {
+      margin-top: 16px;
+      font-size: 11.5px;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .ob-hint kbd {
+      /* Inline keycaps sit on the text baseline, so they must not use the
+         auto-margin that the stacked shortcut rows rely on. */
+      margin: 0 2px;
+      padding: 1px 5px;
+      font-size: 9.5px;
+      vertical-align: baseline;
+      border-bottom-width: 1px;
+    }
+
+    /* Live control on the last step - onboarding that actually configures */
+    .ob-setting {
+      margin-top: 20px;
+      padding: 13px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .ob-setting-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .ob-setting-head span {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .ob-setting p {
+      margin-top: 5px;
+      font-size: 11.5px;
+      line-height: 1.55;
+      color: var(--text-muted);
+    }
+
+    .ob-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 22px;
+      flex-shrink: 0;
+    }
+
+    .ob-count {
+      font-size: 10.5px;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-muted);
+    }
+
+    .ob-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .ob-btn {
+      padding: 9px 17px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .ob-btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+    }
+
+    .ob-btn-ghost:hover {
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .ob-btn-primary {
+      background: var(--accent);
+      color: #001a0d;
+    }
+
+    .ob-btn-primary:hover {
+      background: #4dffa8;
+      transform: translateY(-1px);
+    }
+
+    .ob-skip {
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .ob-skip:hover {
+      color: var(--text-secondary);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .ob-step.active {
+        animation: none;
+      }
+
+      .onboarding.show,
+      .settings-panel.show {
+        animation: none;
+      }
+
+      .ob-rail span,
+      .ob-btn-primary {
+        transition: none;
+      }
+    }
   </style>
+
+
 </head>
 
 <body>
@@ -1135,9 +2002,14 @@
         RYZ ClipSync
       </div>
       <div class="window-controls">
-        <button class="win-dot dot-pin" id="pinBtn" title="Always on Top">
-          <svg viewBox="0 0 24 24">
-            <path d="M16 9V4l1-1V2H7v1l1 1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+        <button class="win-dot dot-settings" id="settingsBtn" title="Settings" aria-label="Open settings" aria-expanded="false">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" aria-hidden="true">
+            <path d="M259.1 73.5C262.1 58.7 275.2 48 290.4 48L350.2 48C365.4 48 378.5 58.7 381.5 73.5L396 143.5C410.1 149.5 423.3 157.2 435.3 166.3L503.1 143.8C517.5 139 533.3 145 540.9 158.2L570.8 210C578.4 223.2 575.7 239.8 564.3 249.9L511 297.3C511.9 304.7 512.3 312.3 512.3 320C512.3 327.7 511.8 335.3 511 342.7L564.4 390.2C575.8 400.3 578.4 417 570.9 430.1L541 481.9C533.4 495 517.6 501.1 503.2 496.3L435.4 473.8C423.3 482.9 410.1 490.5 396.1 496.6L381.7 566.5C378.6 581.4 365.5 592 350.4 592L290.6 592C275.4 592 262.3 581.3 259.3 566.5L244.9 496.6C230.8 490.6 217.7 482.9 205.6 473.8L137.5 496.3C123.1 501.1 107.3 495.1 99.7 481.9L69.8 430.1C62.2 416.9 64.9 400.3 76.3 390.2L129.7 342.7C128.8 335.3 128.4 327.7 128.4 320C128.4 312.3 128.9 304.7 129.7 297.3L76.3 249.8C64.9 239.7 62.3 223 69.8 209.9L99.7 158.1C107.3 144.9 123.1 138.9 137.5 143.7L205.3 166.2C217.4 157.1 230.6 149.5 244.6 143.4L259.1 73.5zM320.3 400C364.5 399.8 400.2 363.9 400 319.7C399.8 275.5 363.9 239.8 319.7 240C275.5 240.2 239.8 276.1 240 320.3C240.2 364.5 276.1 400.2 320.3 400z"/>
+          </svg>
+        </button>
+        <button class="win-dot dot-pin" id="pinBtn" title="Always on Top" aria-label="Toggle always on top" aria-pressed="false">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" aria-hidden="true">
+            <path d="M160 96C160 78.3 174.3 64 192 64L448 64C465.7 64 480 78.3 480 96C480 113.7 465.7 128 448 128L418.5 128L428.8 262.1C465.9 283.3 494.6 318.5 507 361.8L510.8 375.2C513.6 384.9 511.6 395.2 505.6 403.3C499.6 411.4 490 416 480 416L160 416C150 416 140.5 411.3 134.5 403.3C128.5 395.3 126.5 384.9 129.3 375.2L133 361.8C145.4 318.5 174 283.3 211.2 262.1L221.5 128L192 128C174.3 128 160 113.7 160 96zM288 464L352 464L352 576C352 593.7 337.7 608 320 608C302.3 608 288 593.7 288 576L288 464z" />
           </svg>
         </button>
         <button class="win-dot dot-minimize" id="minimizeBtn" title="Minimize">
@@ -1185,6 +2057,22 @@
       </div>
     </div>
 
+    <!-- Tabs -->
+    <div class="tab-bar" role="tablist">
+      <button class="tab-btn active" id="tabAll" role="tab" aria-selected="true" data-tab="all">
+        All
+        <span class="tab-count" id="tabAllCount">0</span>
+      </button>
+      <button class="tab-btn" id="tabPinned" role="tab" aria-selected="false" data-tab="pinned">
+        <svg viewBox="0 0 24 24" class="tab-icon">
+          <path d="M12 17v5" />
+          <path d="M9 10.8V4h6v6.8l2 3.2H7l2-3.2z" />
+        </svg>
+        Pinned
+        <span class="tab-count" id="tabPinnedCount">0</span>
+      </button>
+    </div>
+
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="status-indicator">
@@ -1192,13 +2080,6 @@
         <span class="stats" id="statsText"><span class="count">0</span> items</span>
       </div>
       <div class="toolbar-actions">
-        <label class="toggle-container">
-          <span class="toggle-label">Auto</span>
-          <span class="toggle-switch">
-            <input type="checkbox" id="autoStartupCheckbox">
-            <span class="toggle-slider"></span>
-          </span>
-        </label>
         <button class="btn-delete-all" id="deleteAllBtn">
           <svg viewBox="0 0 24 24">
             <polyline points="3 6 5 6 21 6" />
@@ -1218,19 +2099,302 @@
     <div class="pagination-bar" id="paginationBar">
       <div class="pagination-info" id="paginationInfo">Showing 0 items</div>
       <div class="pagination-controls">
-        <button class="page-nav-btn" id="firstPageBtn" title="First Page">⏮</button>
-        <button class="page-nav-btn" id="prevPageBtn" title="Previous Page">◀</button>
+        <button class="page-nav-btn" id="firstPageBtn" title="First Page" aria-label="First page">
+          <svg viewBox="0 0 24 24">
+            <polyline points="17 5 11 12 17 19" />
+            <line x1="7" y1="5" x2="7" y2="19" />
+          </svg>
+        </button>
+        <button class="page-nav-btn" id="prevPageBtn" title="Previous Page" aria-label="Previous page">
+          <svg viewBox="0 0 24 24">
+            <polyline points="15 5 8 12 15 19" />
+          </svg>
+        </button>
         <span class="page-indicator">
           <input type="number" id="pageInput" min="1" value="1" title="Go to page" />
           <span class="page-total" id="pageTotal">/ 1</span>
         </span>
-        <button class="page-nav-btn" id="nextPageBtn" title="Next Page">▶</button>
-        <button class="page-nav-btn" id="lastPageBtn" title="Last Page">⏭</button>
+        <button class="page-nav-btn" id="nextPageBtn" title="Next Page" aria-label="Next page">
+          <svg viewBox="0 0 24 24">
+            <polyline points="9 5 16 12 9 19" />
+          </svg>
+        </button>
+        <button class="page-nav-btn" id="lastPageBtn" title="Last Page" aria-label="Last page">
+          <svg viewBox="0 0 24 24">
+            <polyline points="7 5 13 12 7 19" />
+            <line x1="17" y1="5" x2="17" y2="19" />
+          </svg>
+        </button>
       </div>
+    </div>
+
+  <!-- Settings Panel -->
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-head">
+      <h2 class="settings-title">Settings</h2>
+      <button class="icon-btn" id="settingsCloseBtn" title="Close" aria-label="Close settings">
+        <svg viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="settings-body">
+      <p class="settings-group-label">Privacy</p>
+      <label class="set-row">
+        <span class="set-text">
+          <span class="set-name">Skip passwords &amp; keys</span>
+          <span class="set-desc">Never store tokens, private keys or credentials</span>
+        </span>
+        <span class="toggle-switch">
+          <input type="checkbox" data-setting="skipSecrets">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+
+      <p class="settings-group-label">Capture</p>
+      <label class="set-row">
+        <span class="set-text">
+          <span class="set-name">Watch the clipboard</span>
+          <span class="set-desc">Master switch for recording new clips</span>
+        </span>
+        <span class="toggle-switch">
+          <input type="checkbox" data-setting="monitorClipboard">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+      <label class="set-row">
+        <span class="set-text">
+          <span class="set-name">Capture images</span>
+          <span class="set-desc">Screenshots and copied pictures</span>
+        </span>
+        <span class="toggle-switch">
+          <input type="checkbox" data-setting="captureImages">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+      <label class="set-row">
+        <span class="set-text">
+          <span class="set-name">Keep rich text</span>
+          <span class="set-desc">Preserve formatting when pasting back</span>
+        </span>
+        <span class="toggle-switch">
+          <input type="checkbox" data-setting="captureHtml">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+      <label class="set-row">
+        <span class="set-text">
+          <span class="set-name">Merge duplicates</span>
+          <span class="set-desc">Count repeats instead of stacking them</span>
+        </span>
+        <span class="toggle-switch">
+          <input type="checkbox" data-setting="mergeDuplicates">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+
+      <p class="settings-group-label">Behaviour</p>
+      <label class="set-row">
+        <span class="set-text">
+          <span class="set-name">Paste into previous app</span>
+          <span class="set-desc">Send Ctrl+V back where you came from</span>
+        </span>
+        <span class="toggle-switch">
+          <input type="checkbox" data-setting="pasteIntoPrevious">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+
+      <p class="settings-group-label">Startup</p>
+      <label class="set-row">
+        <span class="set-text">
+          <span class="set-name">Auto startup</span>
+          <span class="set-desc">Launch with Windows and open in the tray</span>
+        </span>
+        <span class="toggle-switch">
+          <input type="checkbox" id="settingsAutoStartup">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+
+      <p class="settings-group-label">Retention</p>
+      <div class="set-row set-row-block">
+        <span class="set-text">
+          <span class="set-name">Auto-delete old clips</span>
+          <span class="set-desc">A clip is deleted once it is this old. Pinned is always kept.</span>
+        </span>
+        <div class="retention-chips" id="retentionChips">
+          <button class="chip" data-days="0">Never</button>
+          <button class="chip" data-days="1">1 day</button>
+          <button class="chip" data-days="7">7 days</button>
+          <button class="chip" data-days="30">30 days</button>
+        </div>
+      </div>
+
+      <p class="settings-foot-note" id="settingsSkippedNote" hidden></p>
     </div>
   </div>
 
-  <!-- Context Menu -->
+  <!-- Onboarding (first run only) -->
+    <div class="onboarding" id="onboarding">
+      <div class="ob-rail" id="obRail">
+        <span class="active"></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <div class="ob-body">
+        <!-- Step 1 — what it does -->
+        <section class="ob-step active" data-ob-step="0">
+          <div class="ob-mark">
+            <img id="obLogo" alt="RYZ ClipSync">
+          </div>
+          <div class="ob-eyebrow">Welcome</div>
+          <h2 class="ob-title">Your clipboard, remembered.</h2>
+          <p class="ob-copy">ClipSync quietly keeps everything you copy, so you never
+            lose a link, snippet or screenshot again. Nothing leaves your machine.</p>
+        </section>
+
+        <!-- Step 2 — live demo: a real clip the user can actually copy -->
+        <section class="ob-step" data-ob-step="1">
+          <div class="ob-eyebrow">Try it now</div>
+          <h2 class="ob-title">Copy something real.</h2>
+          <p class="ob-copy">This is a genuine clip. Hit copy and watch it land in your
+            history below — the same thing happens to anything you copy.</p>
+
+          <div class="ob-demo" id="obDemo">
+            <div class="ob-demo-head">
+              <span class="ob-tag ob-tag-text">TEXT</span>
+              <span class="ob-demo-meta" id="obDemoMeta">sample clip</span>
+            </div>
+            <div class="ob-demo-body" id="obDemoText">RYZ ClipSync — this snippet is now in your history.</div>
+            <button class="ob-copy-btn" id="obCopyBtn">
+              <svg viewBox="0 0 24 24">
+                <rect x="9" y="9" width="13" height="13" rx="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              <span id="obCopyLabel">Copy this clip</span>
+            </button>
+          </div>
+
+          <div class="ob-reveal" id="obReveal">
+            <div class="ob-reveal-head">
+              <span class="ob-eyebrow">Captured</span>
+              <span class="ob-reveal-tag">Your history</span>
+            </div>
+            <div class="ob-clip" id="obClip">
+              <span class="ob-tag ob-tag-text">TEXT</span>
+              <span class="ob-clip-text" id="obClipText"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Step 3 — images are captured too -->
+        <section class="ob-step" data-ob-step="2">
+          <div class="ob-eyebrow">Images too</div>
+          <h2 class="ob-title">Screenshots, captured.</h2>
+          <p class="ob-copy">Copy an image anywhere and it shows up here instantly — with
+            its dimensions, ready to paste back.</p>
+
+          <div class="ob-demo">
+            <div class="ob-demo-head">
+              <span class="ob-tag ob-tag-img">IMAGE</span>
+              <span class="ob-demo-meta">gradient swatch</span>
+            </div>
+            <div class="ob-swatch" id="obSwatch"></div>
+            <div class="ob-dims" id="obDims">240 × 120</div>
+          </div>
+        </section>
+
+        <!-- Step 4 — shortcuts + privacy + startup -->
+        <section class="ob-step" data-ob-step="3">
+          <div class="ob-mark">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2v4M12 18v4M4.9 4.9l2.9 2.9M16.2 16.2l2.9 2.9M2 12h4M18 12h4M4.9 19.1l2.9-2.9M16.2 7.8l2.9-2.9" />
+            </svg>
+          </div>
+          <div class="ob-eyebrow">Stay ready</div>
+          <h2 class="ob-title">Two keys. Secrets skipped.</h2>
+          <div class="ob-keys">
+            <div class="ob-key-row">
+              <svg viewBox="0 0 24 24">
+                <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
+              </svg>
+              <span>Open ClipSync anywhere</span>
+              <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>V</kbd>
+            </div>
+            <div class="ob-key-row">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              <span>Passwords &amp; keys auto-skipped</span>
+            </div>
+          </div>
+          <div class="ob-setting">
+            <div class="ob-setting-head">
+              <span>Start on login</span>
+              <label class="toggle-container">
+                <span class="toggle-switch">
+                  <input type="checkbox" id="obStartupToggle">
+                  <span class="toggle-slider"></span>
+                </span>
+              </label>
+            </div>
+            <p>Runs quietly in the tray. Opens hidden.</p>
+          </div>
+        </section>
+
+        <!-- Step 5 — the control centre -->
+        <section class="ob-step" data-ob-step="4">
+          <div class="ob-eyebrow">Yours to tune</div>
+          <h2 class="ob-title">Settings, not surprises.</h2>
+          <p class="ob-copy">Everything above is a switch. Turn secret filtering on or
+            off, choose when old clips expire, keep images or drop them.</p>
+
+          <div class="ob-keys">
+            <div class="ob-key-row">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              <span>Secret filtering</span>
+              <span class="ob-pill">On / Off</span>
+            </div>
+            <div class="ob-key-row">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+              <span>Auto-expire history</span>
+              <span class="ob-pill">1 / 7 / 30d</span>
+            </div>
+          </div>
+          <div class="ob-setting">
+            <div class="ob-setting-head">
+              <span>Skip passwords &amp; keys</span>
+              <label class="toggle-container">
+                <span class="toggle-switch">
+                  <input type="checkbox" id="obPrivacyToggle">
+                  <span class="toggle-slider"></span>
+                </span>
+              </label>
+            </div>
+            <p>Leave this on unless you specifically want raw secrets stored.</p>
+          </div>
+          <p class="ob-hint">Everything else lives behind the gear icon, and
+            <kbd>Ctrl</kbd><kbd>,</kbd> opens it from anywhere.</p>
+        </section>
+      </div>
+
+      <div class="ob-foot">
+        <button class="ob-skip" id="obSkip">Skip</button>
+        <div class="ob-actions">
+          <button class="ob-btn ob-btn-ghost" id="obBack" style="display:none">Back</button>
+          <button class="ob-btn ob-btn-primary" id="obNext">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Context Menu -->
   <div class="context-menu" id="contextMenu">
     <div class="context-menu-item" data-action="copy">
       <svg viewBox="0 0 24 24">
@@ -1238,6 +2402,27 @@
         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
       </svg>
       Copy
+    </div>
+    <div class="context-menu-item" data-action="paste">
+      <svg viewBox="0 0 24 24">
+        <path d="M9 4H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" />
+        <rect x="9" y="2" width="6" height="4" rx="1" />
+      </svg>
+      Paste into previous app
+    </div>
+    <div class="context-menu-item" data-action="pin">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 17v5" />
+        <path d="M9 10.8V4h6v6.8l2 3.2H7l2-3.2z" />
+      </svg>
+      <span id="ctxPinLabel">Pin</span>
+    </div>
+    <div class="context-menu-item" data-action="open" id="ctxOpenItem">
+      <svg viewBox="0 0 24 24">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+        <path d="M15 3h6v6M10 14 21 3" />
+      </svg>
+      Open link
     </div>
     <div class="context-menu-divider"></div>
     <div class="context-menu-item danger" data-action="delete">
@@ -1262,6 +2447,9 @@
     Developed By <span class="accent">R ! Y 4 Z</span>
   </div>
 
+  </div>
+  <!-- /.container -->
+
   <script>
     let clipboardHistory = [];
     let filteredHistory = [];
@@ -1279,7 +2467,7 @@
     const searchInput = document.getElementById('searchInput');
     const statsText = document.getElementById('statsText');
     const deleteAllBtn = document.getElementById('deleteAllBtn');
-    const autoStartupCheckbox = document.getElementById('autoStartupCheckbox');
+    const autoStartupCheckbox = document.getElementById('settingsAutoStartup');
     const contextMenu = document.getElementById('contextMenu');
     const toast = document.getElementById('toast');
     const toastText = document.getElementById('toastText');
@@ -1344,6 +2532,14 @@
       lastPageBtn.disabled = currentPage >= totalPages;
     }
 
+    // Shared pin marker so text and image cards show the exact same badge.
+    const PIN_BADGE = `<span class="pin-badge" title="Pinned" aria-label="Pinned">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 17v5"/>
+                <path d="M9 10.8V4h6v6.8l2 3.2H7l2-3.2z"/>
+              </svg>
+            </span>`;
+
     // Render paginated & lazy-loaded clipboard list
     function renderList(page = 1, append = false) {
       totalPages = Math.max(1, Math.ceil(filteredHistory.length / PAGE_SIZE));
@@ -1352,17 +2548,31 @@
       currentPage = page;
 
       if (filteredHistory.length === 0) {
+        // The empty state has to explain *which* view is empty — "no items"
+        // is wrong advice when the Pinned tab is simply empty.
+        const searching = !!searchInput.value.trim();
+        const emptyTitle = searching
+          ? 'No matches found'
+          : (activeTab === 'pinned' ? 'Nothing pinned yet' : 'No items yet');
+        const emptySub = searching
+          ? 'Try a different search term'
+          : (activeTab === 'pinned'
+            ? 'Right-click any clip and choose Pin to keep it here'
+            : 'Copy something to get started');
+        const emptyIcon = activeTab === 'pinned' && !searching
+          ? `<svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.8V4h6v6.8l2 3.2H7l2-3.2z"/></svg>`
+          : `<svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>`;
+
         clipboardListEl.innerHTML = `
           <div class="empty-state">
-            <div class="empty-icon">
-              <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-            </div>
-            <p>No items yet</p>
-            <p class="sub">${searchInput.value.trim() ? 'No matches found' : 'Copy something to get started'}</p>
+            <div class="empty-icon">${emptyIcon}</div>
+            <p>${emptyTitle}</p>
+            <p class="sub">${emptySub}</p>
           </div>
         `;
         updatePaginationUI(0, 0, 0);
         statsText.innerHTML = `<span class="count">0</span> items`;
+        updateTabCounts();
         return;
       }
 
@@ -1383,8 +2593,9 @@
         if (item.type === 'image') {
           const dimText = item.width && item.height ? `<span class="image-dim">${item.width}×${item.height}</span>` : '';
           return `
-            <div class="clipboard-item clipboard-item-image" data-index="${globalIndex}" style="${animStyle}">
+            <div class="clipboard-item clipboard-item-image${item.pinned ? ' is-pinned' : ''}" data-index="${globalIndex}" style="${animStyle}">
               <span class="item-number">#${globalIndex + 1}</span>
+              ${item.pinned ? PIN_BADGE : ''}
               <div class="image-badge">
                 <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                 <span>IMAGE</span>
@@ -1405,14 +2616,16 @@
         }
 
         return `
-          <div class="clipboard-item" data-index="${globalIndex}" style="${animStyle}">
+          <div class="clipboard-item${item.redacted ? ' is-redacted' : ''}${item.pinned ? ' is-pinned' : ''}" data-index="${globalIndex}" style="${animStyle}">
             <span class="item-number">#${globalIndex + 1}</span>
-            <div class="text">${escapeHtml(item.text)}</div>
+            ${item.pinned ? PIN_BADGE : ''}
+            <div class="text">${escapeHtml(item.text)}${item.redacted ? `<span class="redacted-note">${escapeHtml(item.badge || `${item.reason || 'Secret'} — not saved`)}</span>` : ''}</div>
             <div class="meta">
               <span class="timestamp">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 ${formatTimestamp(item.timestamp)}
               </span>
+              ${item.count > 1 ? `<span class="dup-count">×${item.count}</span>` : ''}
               <span class="copy-hint">Tap</span>
             </div>
           </div>
@@ -1427,7 +2640,13 @@
       }
 
       statsText.innerHTML = `<span class="count">${filteredHistory.length.toLocaleString()}</span> item${filteredHistory.length !== 1 ? 's' : ''}`;
+      updateTabCounts();
     }
+
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => setActiveTab(btn.dataset.tab));
+    });
 
     // Pagination Button Listeners
     firstPageBtn.addEventListener('click', () => {
@@ -1484,13 +2703,45 @@
         .replace(/'/g, '&#039;');
     }
 
-    // Filter list based on search
+    // Active tab: 'all' | 'pinned'. Read by filterList so search and the tab
+    // compose together instead of one overwriting the other.
+    let activeTab = 'all';
+
+    function updateTabCounts() {
+      const all = document.getElementById('tabAllCount');
+      const pin = document.getElementById('tabPinnedCount');
+      if (all) all.textContent = clipboardHistory.length.toLocaleString();
+      if (pin) {
+        const n = clipboardHistory.filter((i) => i.pinned).length;
+        pin.textContent = n.toLocaleString();
+      }
+    }
+
+    // Switch tabs and re-run the current search against the new scope.
+    function setActiveTab(tab) {
+      activeTab = tab === 'pinned' ? 'pinned' : 'all';
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        const on = btn.dataset.tab === activeTab;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-selected', String(on));
+      });
+      filterList(searchInput.value);
+    }
+
+    // Filter list based on search AND the active tab
     function filterList(searchTerm) {
-      if (!searchTerm.trim()) {
-        filteredHistory = [...clipboardHistory];
+      const term = (searchTerm || '').trim().toLowerCase();
+
+      // Start from the tab's scope, then narrow by the search term. Doing both
+      // here (rather than in two places) keeps them from fighting each other.
+      const scoped = activeTab === 'pinned'
+        ? clipboardHistory.filter((item) => item.pinned)
+        : clipboardHistory;
+
+      if (!term) {
+        filteredHistory = [...scoped];
       } else {
-        const term = searchTerm.toLowerCase();
-        filteredHistory = clipboardHistory.filter(item => {
+        filteredHistory = scoped.filter(item => {
           if (item.type === 'image') {
             const dimStr = item.width && item.height ? `${item.width}x${item.height} ${item.width}×${item.height}` : '';
             return 'image img photo picture screenshot'.includes(term) || dimStr.includes(term);
@@ -1529,6 +2780,19 @@
     function handleContextMenu(e, itemEl) {
       e.preventDefault();
       contextMenuItemIndex = parseInt(itemEl.dataset.index);
+
+      // Contextual affordances: only offer actions that make sense for the
+      // item under the cursor.
+      const item = filteredHistory[contextMenuItemIndex];
+      const openItem = document.getElementById('ctxOpenItem');
+      const pinLabel = document.getElementById('ctxPinLabel');
+      if (openItem) {
+        openItem.style.display =
+          item && item.type === 'text' && /^https?:\/\//i.test((item.text || '').trim())
+            ? 'flex'
+            : 'none';
+      }
+      if (pinLabel) pinLabel.textContent = item && item.pinned ? 'Unpin' : 'Pin';
 
       let x = e.clientX;
       let y = e.clientY;
@@ -1569,6 +2833,36 @@
           clipboardHistory = await window.electronAPI.deleteItem(actualIndex);
           filterList(searchInput.value);
           showToast('Deleted');
+        }
+      } else if (action === 'paste' && contextMenuItemIndex !== null) {
+        // Copy first, then hand focus back to the app we came from and let it
+        // consume the clipboard, so the paste lands where the user expects.
+        const item = filteredHistory[contextMenuItemIndex];
+        if (item) {
+          if (item.type === 'image') {
+            await window.electronAPI.copyImage(item.imagePath || item.thumbnail);
+          } else {
+            await window.electronAPI.copyText(item.text);
+          }
+          hideContextMenu();
+          const delivered = await window.electronAPI.pasteIntoPrevious();
+          showToast(delivered ? 'Pasted!' : 'Copied — no previous app found');
+          return;
+        }
+      } else if (action === 'pin' && contextMenuItemIndex !== null) {
+        const actualIndex = clipboardHistory.indexOf(filteredHistory[contextMenuItemIndex]);
+        if (actualIndex !== -1) {
+          clipboardHistory = await window.electronAPI.togglePin(actualIndex);
+          const wasPinned = clipboardHistory[actualIndex]?.pinned;
+          filterList(searchInput.value);
+          showToast(wasPinned ? 'Pinned' : 'Unpinned');
+        }
+      } else if (action === 'open' && contextMenuItemIndex !== null) {
+        const item = filteredHistory[contextMenuItemIndex];
+        if (item && item.type === 'text') {
+          const url = (item.text || '').trim();
+          const opened = await window.electronAPI.openLink(url);
+          if (!opened) showToast('Not a valid link');
         }
       }
 
@@ -1621,6 +2915,7 @@
       isAlwaysOnTop = !isAlwaysOnTop;
       await window.electronAPI.setAlwaysOnTop(isAlwaysOnTop);
       pinBtn.classList.toggle('active', isAlwaysOnTop);
+      pinBtn.setAttribute('aria-pressed', String(isAlwaysOnTop));
     });
 
     // Search input
@@ -1651,7 +2946,7 @@
       }
     });
 
-    // Auto startup checkbox
+    // Auto startup toggle — now lives in the Settings panel, not the toolbar.
     autoStartupCheckbox.addEventListener('change', async (e) => {
       await window.electronAPI.setAutoStartup(e.target.checked);
       autoStartupEnabled = e.target.checked;
@@ -1692,6 +2987,17 @@
       if (e.key === 'Escape') {
         hideContextMenu();
         confirmModal.classList.remove('show');
+        // Settings is an overlay, so Escape should dismiss it and return the
+        // user to their list rather than leaving them stuck behind the panel.
+        if (settingsPanel && settingsPanel.classList.contains('show')) {
+          hideSettings();
+        }
+      }
+      // Ctrl+, is the conventional "open settings" shortcut.
+      if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+        e.preventDefault();
+        if (settingsPanel && settingsPanel.classList.contains('show')) hideSettings();
+        else showSettings();
       }
       // Ctrl+F to focus search
       if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
@@ -1705,7 +3011,11 @@
       // Load logo
       try {
         const logoData = await window.electronAPI.getLogoData();
-        if (logoData) document.getElementById('titleLogo').src = logoData;
+        if (logoData) {
+          document.getElementById('titleLogo').src = logoData;
+          const obLogo = document.getElementById('obLogo');
+          if (obLogo) obLogo.src = logoData;
+        }
       } catch (err) {
         console.error('Failed to load logo:', err);
       }
@@ -1716,7 +3026,279 @@
 
       autoStartupEnabled = await window.electronAPI.getAutoStartup();
       autoStartupCheckbox.checked = autoStartupEnabled;
+
+      // Must be awaited: initOnboarding is async (it reads persisted settings),
+      // so leaving it floating made the panel appear a frame or more late.
+      await initOnboarding(autoStartupEnabled);
     }
+
+    // ─── Onboarding ──────────────────────────────────────────────────────
+    // Shown once on first run. Five steps, and every one of them does real
+    // work: the demo really copies, the privacy toggle really writes to
+    // settings, the startup toggle really registers the login item. State lives
+    // in localStorage, which is per-renderer and needs no IPC for the flag.
+    const OB_KEY = 'ryz-clipsync-onboarded';
+    let obIndex = 0;
+    const OB_STEPS = 5;
+    // The clip used for the live tutorial. Copying it for real means the
+    // history genuinely gains an entry, so the payoff is not a fake animation.
+    const OB_DEMO_TEXT = 'RYZ ClipSync — this snippet is now in your history.';
+
+    async function initOnboarding(startupEnabled) {
+      const panel = document.getElementById('onboarding');
+      if (!panel) return;
+
+      const obStartupToggle = document.getElementById('obStartupToggle');
+      if (obStartupToggle) obStartupToggle.checked = startupEnabled;
+
+      // Reflect the real privacy preference on the last step, so the tutorial
+      // agrees with what is actually stored in settings.
+      try {
+        const saved = await window.electronAPI.getSettings();
+        const privacyToggle = document.getElementById('obPrivacyToggle');
+        if (privacyToggle) privacyToggle.checked = saved.skipSecrets !== false;
+      } catch (e) {}
+
+      let seen = false;
+      try {
+        seen = localStorage.getItem(OB_KEY) === '1';
+      } catch (e) {
+        seen = false;
+      }
+      if (seen) return;
+
+      // Defer a frame so the panel fades in after first paint rather than
+      // flashing during layout.
+      showOnboarding(panel);
+      renderObStep();
+    }
+
+    function renderObStep() {
+      const steps = document.querySelectorAll('.ob-step');
+      steps.forEach((s, i) => s.classList.toggle('active', i === obIndex));
+
+      const rail = document.querySelectorAll('#obRail span');
+      rail.forEach((s, i) => {
+        s.classList.toggle('active', i === obIndex);
+        s.classList.toggle('done', i < obIndex);
+      });
+
+      const back = document.getElementById('obBack');
+      const next = document.getElementById('obNext');
+      const skip = document.getElementById('obSkip');
+
+      if (back) back.style.display = obIndex === 0 ? 'none' : 'block';
+      if (next) next.textContent = obIndex === OB_STEPS - 1 ? 'Start copying' : 'Next';
+      if (skip) skip.style.display = obIndex === OB_STEPS - 1 ? 'none' : 'block';
+    }
+
+    // ─── Settings Panel ──────────────────────────────────────────────────────
+const settingsPanel = document.getElementById('settingsPanel');
+const settingsBtn = document.getElementById('settingsBtn');
+
+// Rotate the gear a quarter turn each time it is used, and leave it resting at
+// that angle while the panel is open. The animation class is removed on
+// animationend so it can replay on the next click.
+function spinGear(direction) {
+  if (!settingsBtn) return;
+  const cls = direction === 'out' ? 'spin-out' : 'spin-in';
+  settingsBtn.classList.remove('spin-in', 'spin-out');
+  // Force a reflow so re-adding the class restarts the animation even when the
+  // same class is applied twice in quick succession.
+  void settingsBtn.offsetWidth;
+  settingsBtn.classList.add(cls);
+}
+
+settingsBtn?.addEventListener('animationend', (e) => {
+  if (e.animationName === 'gearSpin' || e.animationName === 'gearSpinBack') {
+    settingsBtn.classList.remove('spin-in', 'spin-out');
+  }
+});
+
+async function showSettings() {
+  if (!settingsPanel) return;
+  settingsPanel.classList.add('show');
+  if (settingsBtn) {
+    settingsBtn.classList.add('open');
+    settingsBtn.setAttribute('aria-expanded', 'true');
+  }
+  spinGear('in');
+  await loadSettingsUI();
+
+  // Auto startup lives in the OS login-item store rather than settings.json,
+  // so it has to be read back separately whenever the panel opens.
+  try {
+    const on = await window.electronAPI.getAutoStartup();
+    const el = document.getElementById('settingsAutoStartup');
+    if (el) el.checked = !!on;
+  } catch (e) {}
+}
+
+function hideSettings() {
+  if (!settingsPanel) return;
+  settingsPanel.classList.remove('show');
+  if (settingsBtn) {
+    settingsBtn.classList.remove('open');
+    settingsBtn.setAttribute('aria-expanded', 'false');
+  }
+  spinGear('out');
+}
+
+// Populate the panel from persisted settings, so what is shown is always the
+// state that is actually stored.
+async function loadSettingsUI() {
+  const s = await window.electronAPI.getSettings();
+  settingsPanel.querySelectorAll('input[data-setting]').forEach((el) => {
+    el.checked = !!s[el.dataset.setting];
+  });
+
+  const chips = document.getElementById('retentionChips');
+  if (chips) {
+    const days = Number(s.retentionDays) || 0;
+    chips.querySelectorAll('.chip').forEach((c) => {
+      c.classList.toggle('active', Number(c.dataset.days) === days);
+    });
+  }
+
+  // Warn only when the user has actually turned protection off.
+  const note = document.getElementById('settingsSkippedNote');
+  if (note) {
+    const off = !s.skipSecrets;
+    note.hidden = !off;
+    note.textContent = off
+      ? 'Password and API-key filtering is off. Anything you copy will be stored verbatim.'
+      : '';
+  }
+
+  // Reflect the monitoring master switch in the live status dot.
+  const monitor = settingsPanel.querySelector('input[data-setting="monitorClipboard"]');
+  const dot = document.getElementById('statusDot');
+  if (monitor && dot) dot.classList.toggle('paused', !monitor.checked);
+}
+
+// The gear is a toggle: one click opens the panel, the next closes it.
+document.getElementById('settingsBtn')?.addEventListener('click', () => {
+  const isOpen = settingsPanel && settingsPanel.classList.contains('show');
+  if (isOpen) hideSettings();
+  else showSettings();
+});
+document.getElementById('settingsCloseBtn')?.addEventListener('click', hideSettings);
+
+settingsPanel?.querySelectorAll('input[data-setting]').forEach((input) => {
+  input.addEventListener('change', async () => {
+    const key = input.dataset.setting;
+    const value = input.checked;
+    const s = await window.electronAPI.setSetting(key, value);
+
+    // Reflect the authoritative value back in case the main process coerced it.
+    input.checked = !!s[key];
+
+    if (key === 'skipSecrets') loadSettingsUI();
+    if (key === 'monitorClipboard') {
+      // Reflect the master switch in the live status dot so the toolbar never
+      // contradicts the panel.
+      const dot = document.getElementById('statusDot');
+      if (dot) dot.classList.toggle('paused', !value);
+    }
+  });
+});
+
+    // Pick a rolling window: a clip is deleted once it is older than N days.
+    document.getElementById('retentionChips')?.addEventListener('click', async (e) => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      const days = Number(chip.dataset.days) || 0;
+      document.getElementById('retentionChips')
+        .querySelectorAll('.chip')
+        .forEach((c) => c.classList.toggle('active', c === chip));
+
+      await window.electronAPI.setSetting('retentionDays', days);
+      clipboardHistory = await window.electronAPI.applyRetention();
+      filterList(searchInput.value);
+      showToast(days === 0 ? 'Clips are kept forever' : `Auto-deleting clips older than ${days}d`);
+    });
+
+// Live tutorial: copying the sample really writes to the system clipboard,
+// and the resulting clip really appears in history. Nothing here is mocked.
+    document.getElementById('obCopyBtn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('obCopyBtn');
+      const label = document.getElementById('obCopyLabel');
+      const reveal = document.getElementById('obReveal');
+      const clipText = document.getElementById('obClipText');
+
+      try {
+        await window.electronAPI.copyAndRecord(OB_DEMO_TEXT);
+
+        // The clip is recorded synchronously by copy-and-record, so this is
+        // just a confirmation read — not a wait-and-hope loop.
+        const history = await window.electronAPI.getClipboardHistory();
+        const landed = history.some((it) => it.type === 'text' && it.text === OB_DEMO_TEXT);
+
+        btn.classList.add('copied');
+        if (label) label.textContent = landed ? 'Copied — it\'s in your history' : 'Copied to clipboard';
+        if (reveal) {
+          if (clipText) clipText.textContent = OB_DEMO_TEXT;
+          reveal.classList.add('show');
+        }
+
+        // Keep the real list underneath in sync, so finishing the tutorial
+        // reveals a history that already contains the clip.
+        clipboardHistory = await window.electronAPI.getClipboardHistory();
+        filteredHistory = [...clipboardHistory];
+        renderList(1);
+      } catch (err) {
+        if (label) label.textContent = 'Copy failed';
+      }
+    });
+
+    function showOnboarding(panel) {
+      panel.classList.add('show');
+    }
+
+    async function finishOnboarding() {
+      const panel = document.getElementById('onboarding');
+      try {
+        localStorage.setItem(OB_KEY, '1');
+      } catch (e) {}
+
+      // Persist the toggle the user actually flipped on the last step.
+      const t = document.getElementById('obStartupToggle');
+      if (t) {
+        autoStartupEnabled = t.checked;
+        try {
+          await window.electronAPI.setAutoStartup(t.checked);
+        } catch (e) {}
+      }
+
+      // Likewise for the privacy switch.
+      const p = document.getElementById('obPrivacyToggle');
+      if (p) {
+        try {
+          await window.electronAPI.setSetting('skipSecrets', p.checked);
+        } catch (e) {}
+      }
+
+      if (panel) panel.classList.remove('show');
+    }
+
+    // Wire controls once, at load.
+    document.getElementById('obNext')?.addEventListener('click', () => {
+      if (obIndex === OB_STEPS - 1) {
+        finishOnboarding();
+      } else {
+        obIndex++;
+        renderObStep();
+      }
+    });
+
+    document.getElementById('obBack')?.addEventListener('click', () => {
+      if (obIndex > 0) {
+        obIndex--;
+        renderObStep();
+      }
+    });
+
+    document.getElementById('obSkip')?.addEventListener('click', finishOnboarding);
 
     init();
   </script>

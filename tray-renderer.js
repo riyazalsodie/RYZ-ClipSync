@@ -53,8 +53,10 @@ async function updateTrayUI(passedHistory) {
     const isMonitoring = await window.electronAPI.getMonitoringStatus();
 
     startupCheckbox.checked = isStarted;
+    // Toggle the pause/play icon by class, not textContent — the icon is an
+    // inline SVG and writing text to it would destroy the markup.
+    monitoringIcon.classList.toggle('resumed', !isMonitoring);
     monitoringText.textContent = isMonitoring ? 'Pause Monitoring' : 'Resume Monitoring';
-    monitoringIcon.textContent = isMonitoring ? '⏸' : '▶';
 
     // Update recent items (limit to 5)
     recentItemsList.innerHTML = '';
@@ -63,7 +65,9 @@ async function updateTrayUI(passedHistory) {
         div.className = 'recent-item';
         if (item.type === 'image') {
             const dim = item.width && item.height ? ` (${item.width}×${item.height})` : '';
-            div.textContent = `${index + 1}. 🖼️ [Image]${dim}`;
+            // Plain-text label rather than an emoji: the row is styled with the
+            // same line icons as the rest of the menu.
+            div.textContent = `${index + 1}. Image${dim}`;
             div.onclick = async () => {
                 await window.electronAPI.copyImage(item.imagePath || item.thumbnail);
                 window.electronAPI.closeWindow();
@@ -99,7 +103,7 @@ window.electronAPI.onClipboardUpdated((history) => {
 
 window.electronAPI.onMonitoringChanged((isMonitoringStatus) => {
     monitoringText.textContent = isMonitoringStatus ? 'Pause Monitoring' : 'Resume Monitoring';
-    monitoringIcon.textContent = isMonitoringStatus ? '⏸' : '▶';
+    monitoringIcon.classList.toggle('resumed', !isMonitoringStatus);
 });
 
 window.electronAPI.onAutoStartupChanged((enabled) => {

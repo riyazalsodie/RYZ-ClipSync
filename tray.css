@@ -69,10 +69,41 @@ body {
 }
 
 .menu-item .icon {
-    font-size: 14px;
     width: 20px;
     display: flex;
+    align-items: center;
     justify-content: center;
+    /* Line icons instead of emoji, so they match the UI's stroke weight and
+       inherit the row colour on hover. */
+    color: var(--text-muted);
+    transition: color 0.15s ease;
+}
+
+.menu-item .icon svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.menu-item:hover .icon {
+    color: var(--accent);
+}
+
+/* Pause / play swap: both SVGs are always in the DOM, only one is shown. */
+#monitoring-icon .ic-play {
+    display: none;
+}
+
+#monitoring-icon.resumed .ic-pause {
+    display: none;
+}
+
+#monitoring-icon.resumed .ic-play {
+    display: block;
 }
 
 .menu-item .label {

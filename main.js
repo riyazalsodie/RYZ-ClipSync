@@ -1,4 +1,4 @@
-const { app, BrowserWindow, clipboard, Tray, Menu, nativeImage, ipcMain, globalShortcut, screen } = require('electron');
+const { app, BrowserWindow, clipboard, Tray, Menu, nativeImage, ipcMain, globalShortcut, screen, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -12,6 +12,154 @@ let clipboardHistory = [];
 let DATA_FILE;
 let IMAGES_DIR;
 let isMonitoring = true;
+let monitoringStarted = false;
+
+// The main window hides to the system tray instead of closing, so the process
+// usually keeps running in the background. This flag makes sure that case is
+// never mistaken for a real quit.
+app.isQuitting = false;
+
+// ── Single instance lock ────────────────────────────────────────────────
+// The app lives in the system tray, so it is very often already running
+// (after a "start hidden" auto-startup launch, or after closing the window).
+// Without this lock, opening the app again spawns a *second* process which
+// competes for the tray icon, while the user sees no window at all.
+// Taking the lock means a later launch just reveals the existing window.
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  // Another instance owns the lock and will surface its own window instead.
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    showMainWindow();
+  });
+
+  app.whenReady().then(() => {
+    createWindow();
+    createTray();
+  });
+}
+
+// ── Privacy: sensitive-content detection ─────────────────────────────────
+// Clips that look like credentials are never written to history. Patterns are
+// deliberately high-confidence (recognisable token shapes) so ordinary text is
+// never dropped by mistake. Skipping is the safe failure: a missed clip is
+// recoverable, a stored password is not.
+const SENSITIVE_PATTERNS = [
+  { name: 'Private key', re: /-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----/ },
+  { name: 'AWS access key', re: /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/ },
+  { name: 'AWS secret key', re: /\baws_secret_access_key\s*[=:]\s*["']?[A-Za-z0-9/+=]{40}/i },
+  { name: 'JWT', re: /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/ },
+  { name: 'GitHub token', re: /\bgh[pousr]_[A-Za-z0-9]{16,}/ },
+  { name: 'Slack token', re: /\bxox[baprs]-[A-Za-z0-9-]{10,}/ },
+  { name: 'Google API key', re: /\bAIza[0-9A-Za-z_-]{35}\b/ },
+  { name: 'Stripe key', re: /\b[sr]k_(?:live|test)_[A-Za-z0-9]{16,}/ },
+  { name: 'OpenAI key', re: /\bsk-[A-Za-z0-9_-]{20,}/ },
+  { name: 'npm token', re: /\bnpm_[A-Za-z0-9]{30,}/ },
+  { name: 'Bearer token', re: /\bBearer\s+[A-Za-z0-9._~+/-]{20,}=*/ },
+  // Credentials embedded in a connection string, e.g. postgres://user:pw@host
+  { name: 'Database credentials', re: /\b(?:mongodb(?:\+srv)?|postgres(?:ql)?|mysql|redis|amqp):\/\/[^\s:@/]+:[^\s:@/]+@/i }
+];
+
+// Returns the matched secret type, or null when the text looks safe.
+function detectSensitive(text) {
+  if (!text) return null;
+  // Very large payloads are documents, not credentials. Skipping the scan
+  // keeps the 1s clipboard poll cheap.
+  if (text.length > 20000) return null;
+
+  for (const pattern of SENSITIVE_PATTERNS) {
+    if (pattern.re.test(text)) return pattern.name;
+  }
+  return null;
+}
+
+// Strip the secret itself, keeping only enough context to recognise the clip
+// (e.g. "AWS_ACCESS_KEY_ID=AKIA..."). The matched value is never retained.
+function redactSensitive(text, label) {
+  // Single-line marker: the stored text already says it was not saved, so the
+  // UI adds the type as a separate badge rather than repeating it here.
+  const safeKey = text.split(/[=:\s]/, 1)[0];
+  const prefix = (safeKey && safeKey.length <= 40 ? safeKey : 'value').slice(0, 40);
+  return `${prefix} = [${label} detected — not saved]`;
+}
+
+// The label the renderer shows in the redacted-item badge, without repeating
+// the text that is already stored in the clip body.
+function redactBadge(label) {
+  return `${label || 'Secret'} — not saved`;
+}
+
+// ── Settings ─────────────────────────────────────────────────────────────
+// A small JSON file next to the history. Read once at startup, written
+// debounced on change, so toggles survive a restart without pulling in any
+// dependency. Unknown keys fall back to the default, so adding a setting in a
+// future version cannot break an older config.
+const DEFAULT_SETTINGS = {
+  skipSecrets: true,        // never store passwords / API keys / tokens
+  captureImages: true,      // store screenshots and copied images
+  mergeDuplicates: true,    // collapse repeat copies into a counter
+  captureHtml: true,        // keep rich-text formatting for pastes
+  pasteIntoPrevious: true,  // offer paste back into the previous app
+  monitorClipboard: true,   // master switch for clipboard watching
+  retentionDays: 0          // 0 = keep forever, otherwise a rolling N-day window
+};
+
+let appSettings = { ...DEFAULT_SETTINGS };
+
+function getSettingsFile() {
+  return path.join(app.getPath('userData'), 'settings.json');
+}
+
+function loadSettings() {
+  try {
+    const file = getSettingsFile();
+    if (fs.existsSync(file)) {
+      const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+      // Merge over defaults so a partial or older file still yields a full set.
+      appSettings = { ...DEFAULT_SETTINGS, ...parsed };
+    }
+  } catch (e) {
+    // A corrupt settings file must never stop the app from starting.
+    console.error('Failed to read settings, using defaults:', e);
+    appSettings = { ...DEFAULT_SETTINGS };
+  }
+  return appSettings;
+}
+
+let settingsSaveTimeout = null;
+
+function saveSettings() {
+  if (settingsSaveTimeout) clearTimeout(settingsSaveTimeout);
+  settingsSaveTimeout = setTimeout(() => {
+    settingsSaveTimeout = null;
+    try {
+      fs.writeFileSync(getSettingsFile(), JSON.stringify(appSettings, null, 2), 'utf8');
+    } catch (e) {
+      console.error('Failed to save settings:', e);
+    }
+  }, 300);
+}
+
+function setSetting(key, value) {
+  // Reject unknown keys so the renderer cannot write arbitrary junk into the file.
+  if (!Object.prototype.hasOwnProperty.call(DEFAULT_SETTINGS, key)) return appSettings;
+  appSettings[key] = value;
+  saveSettings();
+
+  // A couple of settings need immediate side-effects rather than waiting for
+  // the next restart to take effect.
+  if (key === 'monitorClipboard') {
+    isMonitoring = !!value;
+    if (isMonitoring) startClipboardMonitoring();
+    if (tray) updateTrayMenu();
+  }
+  if (key === 'captureImages' && !value) {
+    lastClipboardImageHash = '';
+  }
+  return appSettings;
+}
 
 function getImagesDir() {
   if (!IMAGES_DIR) {
@@ -193,7 +341,7 @@ function trimHistoryAndSave() {
 }
 
 // Add new text clipboard item
-function addClipboardTextItem(text) {
+function addClipboardTextItem(text, html) {
   if (!text || text === lastClipboardContent) {
     return;
   }
@@ -201,6 +349,28 @@ function addClipboardTextItem(text) {
   // Fast check to skip empty/whitespace strings
   const hasContent = text.length > 100 ? true : text.trim() !== '';
   if (!hasContent) return;
+
+  // Privacy: never persist credentials, unless the user opted out in Settings.
+  const secretLabel = appSettings.skipSecrets ? detectSensitive(text) : null;
+  if (secretLabel) {
+    lastClipboardContent = text;
+    lastClipboardImageHash = '';
+    // Store a redacted placeholder so the user can see that something was
+    // captured, and can see *why* it was not stored verbatim.
+    clipboardHistory = clipboardHistory.filter(
+      item => item.type === 'image' || item.text !== redactSensitive(text, secretLabel)
+    );
+    clipboardHistory.unshift({
+      type: 'text',
+      text: redactSensitive(text, secretLabel),
+      redacted: true,
+      reason: secretLabel,
+      badge: redactBadge(secretLabel),
+      timestamp: Date.now()
+    });
+    trimHistoryAndSave();
+    return;
+  }
 
   // Truncate extremely large texts to prevent memory/performance issues
   const MAX_ITEM_TEXT_LENGTH = 50000;
@@ -212,15 +382,31 @@ function addClipboardTextItem(text) {
   lastClipboardContent = text; // Keep track of original text to prevent duplicate triggers
   lastClipboardImageHash = '';
 
-  // Remove duplicate if exists (compare against processed text)
-  clipboardHistory = clipboardHistory.filter(item => item.type === 'image' || item.text !== processedText);
+  // Merge with an existing identical clip instead of adding a new entry, so
+  // repeatedly copying the same snippet does not flood the history.
+  const existingIndex = appSettings.mergeDuplicates
+    ? clipboardHistory.findIndex(
+      item => item.type === 'text' && !item.redacted && item.text === processedText
+    )
+    : -1;
+  if (existingIndex !== -1) {
+    const existing = clipboardHistory.splice(existingIndex, 1)[0];
+    clipboardHistory.unshift({ ...existing, timestamp: Date.now(), count: (existing.count || 1) + 1 });
+    trimHistoryAndSave();
+    return;
+  }
 
-  // Add to beginning
-  clipboardHistory.unshift({
+  // Add to beginning. Preserve HTML when it differs from plain text so a
+  // paste elsewhere can keep its original formatting.
+  const item = {
     type: 'text',
     text: processedText,
     timestamp: Date.now()
-  });
+  };
+  if (appSettings.captureHtml && html && html.trim() && html.replace(/<[^>]*>/g, '').trim() !== text.trim()) {
+    item.html = html.length > MAX_ITEM_TEXT_LENGTH * 4 ? undefined : html;
+  }
+  clipboardHistory.unshift(item);
 
   trimHistoryAndSave();
 }
@@ -293,7 +479,20 @@ function addClipboardImageItem(nativeImg, hash) {
 
 // Monitor clipboard
 function startClipboardMonitoring() {
+  // createWindow() may run more than once (e.g. via the activate handler).
+  // Without this guard each call would spawn another polling interval and
+  // every captured clip would be recorded twice.
+  if (monitoringStarted) return;
+  monitoringStarted = true;
+
   loadClipboardHistory();
+  loadSettings();
+  // Apply the retention policy at startup so clips that expired while the app
+  // was closed (including a calendar date that has since passed) are cleaned
+  // up without the user opening Settings.
+  purgeExpiredClips();
+  // The tray toggle and the poll both read this, so keep them in sync.
+  isMonitoring = appSettings.monitorClipboard !== false;
   try {
     lastClipboardContent = clipboard.readText();
   } catch (error) {
@@ -319,21 +518,34 @@ function startClipboardMonitoring() {
         currentText = clipboard.readText();
       } catch (e) {}
 
+      // Skip the (relatively costly) image decode entirely when image capture
+      // is switched off in Settings.
       let currentImg = null;
       let hasImage = false;
       let imgHash = '';
-      try {
-        currentImg = clipboard.readImage();
-        if (currentImg && !currentImg.isEmpty()) {
-          const size = currentImg.getSize();
-          if (size.width > 0 && size.height > 0) {
-            hasImage = true;
-            imgHash = crypto.createHash('md5').update(currentImg.toBitmap()).digest('hex');
+      if (appSettings.captureImages) {
+        try {
+          currentImg = clipboard.readImage();
+          if (currentImg && !currentImg.isEmpty()) {
+            const size = currentImg.getSize();
+            if (size.width > 0 && size.height > 0) {
+              hasImage = true;
+              imgHash = crypto.createHash('md5').update(currentImg.toBitmap()).digest('hex');
+            }
           }
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
 
       const hasText = Boolean(currentText && (currentText.length > 100 || currentText.trim() !== ''));
+
+      // Read the HTML flavour only when the text actually changed, so the
+      // 1s poll does not pay for a clipboard read on every tick.
+      let currentHtml = '';
+      if (currentText && currentText !== lastClipboardContent) {
+        try {
+          currentHtml = clipboard.readHTML();
+        } catch (e) {}
+      }
 
       // If image is present and changed
       if (hasImage && (!hasText || (imgHash !== lastClipboardImageHash && currentText === lastClipboardContent))) {
@@ -342,7 +554,7 @@ function startClipboardMonitoring() {
         }
       } else if (hasText) {
         if (currentText !== lastClipboardContent) {
-          addClipboardTextItem(currentText);
+          addClipboardTextItem(currentText, currentHtml);
         }
       } else if (hasImage) {
         if (imgHash !== lastClipboardImageHash) {
@@ -355,16 +567,21 @@ function startClipboardMonitoring() {
   }, 1000);
 }
 
-function createWindow() {
-  ipcMain.handle('get-logo-data', () => {
-    const iconPath = getAssetPath('logo.png');
-    if (fs.existsSync(iconPath)) {
-      // Resize to 32x32 for UI consistency and performance
-      return nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 }).toDataURL();
-    }
-    return '';
-  });
+// Bring the main window to the front, recreating it only if it no longer exists.
+function showMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    createWindow();
+  }
+  if (!mainWindow) return;
 
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+function createWindow() {
   const isHidden = process.argv.includes('--hidden') || app.getLoginItemSettings().wasOpenedAsHidden;
 
   mainWindow = new BrowserWindow({
@@ -388,6 +605,10 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
+
+  // Remember which app had focus before ClipSync came forward, so a chosen
+  // clip can be pasted straight back into it.
+  mainWindow.on('blur', updatePreviousWindow);
 
   mainWindow.on('close', (e) => {
     if (app.isQuitting) {
@@ -424,30 +645,43 @@ function createTray() {
 
   tray.setToolTip('RYZ ClipSync');
 
+  // Windows emits 'click' twice *and then* 'double-click' for a double click.
+  // Without suppressing the popup for the second click, a double click would
+  // flash the popup open and immediately closed again, so the main window never
+  // appeared to open. A timer defers the single-click action to tell the two
+  // apart.
+  let clickTimer = null;
+
   tray.on('click', () => {
-    toggleTrayWindow();
+    if (clickTimer) clearTimeout(clickTimer);
+    clickTimer = setTimeout(() => {
+      clickTimer = null;
+      toggleTrayWindow();
+    }, 250);
   });
 
   tray.on('right-click', () => {
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
+    }
     toggleTrayWindow();
   });
 
   tray.on('double-click', () => {
-    if (mainWindow) {
-      mainWindow.show();
-      mainWindow.focus();
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
     }
+    showMainWindow();
   });
 
   // Global shortcut: Ctrl+Shift+V to show/focus window
   globalShortcut.register('CommandOrControl+Shift+V', () => {
-    if (mainWindow) {
-      if (mainWindow.isVisible()) {
-        mainWindow.hide();
-      } else {
-        mainWindow.show();
-        mainWindow.focus();
-      }
+    if (mainWindow && mainWindow.isVisible() && !mainWindow.isMinimized()) {
+      mainWindow.hide();
+    } else {
+      showMainWindow();
     }
   });
 }
@@ -459,12 +693,19 @@ function updateTrayMenu() {
   }
 }
 
-app.whenReady().then(() => {
-  createWindow();
-  createTray();
+// IPC Handlers
+// Registered at module scope. These used to live inside createWindow(), which
+// threw "Attempted to register a second handler for 'get-logo-data'" whenever
+// the window was recreated (macOS 'activate' / activate-after-quit).
+ipcMain.handle('get-logo-data', () => {
+  const iconPath = getAssetPath('logo.png');
+  if (fs.existsSync(iconPath)) {
+    // Resize to 32x32 for UI consistency and performance
+    return nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 }).toDataURL();
+  }
+  return '';
 });
 
-// IPC Handlers
 ipcMain.handle('get-clipboard-history', () => {
   return clipboardHistory;
 });
@@ -522,6 +763,177 @@ ipcMain.handle('copy-text', (event, text) => {
   lastClipboardImageHash = '';
   clipboard.writeText(text);
   return true;
+});
+
+// Copy AND record in one step. The plain copy-text handler deliberately marks
+// the value as "already seen" so the clipboard poll does not re-capture it,
+// which means a clip copied from inside the app would never reach history.
+// The onboarding tutorial needs a real entry to appear, so it uses this.
+ipcMain.handle('copy-and-record', (event, text) => {
+  clipboard.writeText(text);
+  // Route through the normal capture path so privacy filtering, merging and
+  // persistence all behave exactly as they do for a real copy.
+  addClipboardTextItem(text, '');
+  return true;
+});
+
+// ── Paste into the app you came from ─────────────────────────────────────
+// Windows' clipboard only holds data, not a destination, so we remember the
+// window that was focused before ClipSync came to the front and replay a
+// Ctrl+V into it. This is what makes ClipSync feel like a true middle-man.
+let previousFocusedWindowId = null;
+
+// Track the last non-ClipSync window that had focus, so a paste can be
+// delivered back to it after the user picks an item.
+function updatePreviousWindow() {
+  const focused = BrowserWindow.getFocusedWindow();
+  const ownWindows = [mainWindow, trayWindow].filter(w => w && !w.isDestroyed());
+  if (focused && !ownWindows.includes(focused)) {
+    previousFocusedWindowId = focused.id;
+  }
+}
+
+function findPreviousWindow() {
+  if (!previousFocusedWindowId) return null;
+  try {
+    const win = BrowserWindow.fromId(previousFocusedWindowId);
+    if (!win || win.isDestroyed()) return null;
+    return win;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Replay Ctrl+V into the previously focused window.
+ipcMain.handle('paste-into-previous', async () => {
+  if (!appSettings.pasteIntoPrevious) return false;
+  const target = findPreviousWindow();
+  if (!target) return false;
+
+  // Hide ourselves first so the target regains focus, then send the chord.
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
+    mainWindow.hide();
+  }
+
+  try {
+    target.focus();
+  } catch (e) {}
+
+  await new Promise(resolve => setTimeout(resolve, 120));
+  try {
+    target.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Control' });
+    target.webContents.sendInputEvent({ type: 'char', keyCode: 'v' });
+    target.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Control' });
+    return true;
+  } catch (e) {
+    console.error('Error pasting into previous window:', e);
+    return false;
+  }
+});
+
+// Open a URL in the user's default browser.
+ipcMain.handle('open-link', (event, url) => {
+  try {
+    const trimmed = String(url || '').trim();
+    // Only ever open http(s) — never file:, javascript:, or custom schemes.
+    if (!/^https?:\/\//i.test(trimmed)) return false;
+    shell.openExternal(trimmed);
+    return true;
+  } catch (e) {
+    console.error('Error opening link:', e);
+    return false;
+  }
+});
+
+// Toggle the pinned state of an item. Pinned items float to the top of the
+// list and survive the age-based expiry sweep.
+ipcMain.handle('toggle-pin', (event, index) => {
+  if (index < 0 || index >= clipboardHistory.length) return clipboardHistory;
+  clipboardHistory[index].pinned = !clipboardHistory[index].pinned;
+  clipboardHistory[index].timestamp = Date.now();
+  trimHistoryAndSave();
+  return clipboardHistory;
+});
+
+// Open a preview of the item in the system's default application.
+ipcMain.handle('preview-item', (event, index) => {
+  const item = clipboardHistory[index];
+  if (!item) return false;
+  try {
+    if (item.type === 'image' && item.imagePath && fs.existsSync(item.imagePath)) {
+      shell.openPath(item.imagePath);
+      return true;
+    }
+    if (item.type === 'text') {
+      const text = item.text || '';
+      if (/^https?:\/\//i.test(text.trim())) {
+        return shell.openExternal(text.trim()) === undefined;
+      }
+      // Write to a temp file so the OS default app opens it (PDFs, code, etc.)
+      const tmp = path.join(app.getPath('temp'), `clipsync-preview-${Date.now()}.txt`);
+      fs.writeFileSync(tmp, text, 'utf8');
+      shell.openPath(tmp);
+      return true;
+    }
+  } catch (e) {
+    console.error('Error previewing item:', e);
+  }
+  return false;
+});
+
+ipcMain.handle('get-settings', () => {
+  return appSettings;
+});
+
+ipcMain.handle('set-setting', (event, key, value) => {
+  return setSetting(key, value);
+});
+
+// Resolve the moment before which clips are considered expired.
+// retentionDays is a rolling window counted from now:
+//   0  -> keep forever (the "Never" preset)
+//   N  -> anything copied more than N days ago is removed
+// Pinned items are always exempt.
+function getRetentionCutoff() {
+  const d = Number(appSettings.retentionDays);
+  if (Number.isFinite(d) && d > 0) {
+    return Date.now() - d * 24 * 60 * 60 * 1000;
+  }
+  return null;
+}
+
+// Drop expired clips and delete their backing image files from disk.
+function purgeExpiredClips() {
+  const cutoff = getRetentionCutoff();
+  if (cutoff === null) return false;
+
+  const survivors = [];
+  let removed = false;
+  for (const item of clipboardHistory) {
+    const keep = item.pinned || !item.timestamp || item.timestamp >= cutoff;
+    if (keep) {
+      survivors.push(item);
+    } else {
+      removed = true;
+      if (item.type === 'image' && item.imagePath) {
+        try {
+          if (fs.existsSync(item.imagePath)) fs.unlinkSync(item.imagePath);
+        } catch (e) {}
+      }
+    }
+  }
+
+  if (removed) {
+    clipboardHistory = survivors;
+    trimHistoryAndSave();
+  }
+  return removed;
+}
+
+// Forget clips per the current retention settings.
+ipcMain.handle('apply-retention', () => {
+  purgeExpiredClips();
+  return clipboardHistory;
 });
 
 ipcMain.handle('copy-image', (event, imageSource) => {
@@ -588,10 +1000,7 @@ ipcMain.handle('set-always-on-top', (event, enabled) => {
 ipcMain.on('tray-action', (event, action) => {
   switch (action) {
     case 'open-main':
-      if (mainWindow) {
-        mainWindow.show();
-        mainWindow.focus();
-      }
+      showMainWindow();
       break;
     case 'toggle-monitoring':
       isMonitoring = !isMonitoring;
@@ -685,11 +1094,17 @@ app.on('window-all-closed', (e) => {
 });
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+  showMainWindow();
 });
 
 app.on('before-quit', () => {
   saveClipboardHistorySync();
+  // Flush any pending debounced settings write so the last toggle is not lost.
+  if (settingsSaveTimeout) {
+    clearTimeout(settingsSaveTimeout);
+    settingsSaveTimeout = null;
+    try {
+      fs.writeFileSync(getSettingsFile(), JSON.stringify(appSettings, null, 2), 'utf8');
+    } catch (e) {}
+  }
 });
