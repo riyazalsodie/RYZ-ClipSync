@@ -3,6 +3,7 @@ node_modules/
 /dist/*
 !/dist/RYZ ClipSync Setup 1.0.3.exe
 /out/
+work/
 *.log
 
 # OS Specific
