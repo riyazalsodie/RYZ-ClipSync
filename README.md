@@ -10,14 +10,14 @@
 
 <br/>
 
-[![Version](https://img.shields.io/badge/Version-1.0.3-00ff88?style=for-the-badge&logo=electron&logoColor=000&labelColor=0a0a0a)](https://github.com/riyazalsodie/RYZ-ClipSync/releases/tag/1.0.3)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-00ff88?style=for-the-badge&logo=windows&logoColor=000&labelColor=0a0a0a)](https://github.com/riyazalsodie/RYZ-ClipSync/releases/tag/1.0.3)
+[![Version](https://img.shields.io/badge/Version-1.1.0-00ff88?style=for-the-badge&logo=electron&logoColor=000&labelColor=0a0a0a)](https://github.com/riyazalsodie/RYZ-ClipSync/releases/tag/v1.1.0)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-00ff88?style=for-the-badge&logo=windows&logoColor=000&labelColor=0a0a0a)](https://github.com/riyazalsodie/RYZ-ClipSync/releases/tag/v1.1.0)
 [![Capacity](https://img.shields.io/badge/Capacity-10%2C000%20Items-00ff88?style=for-the-badge&logo=database&logoColor=000&labelColor=0a0a0a)](https://github.com/riyazalsodie/RYZ-ClipSync)
 [![License](https://img.shields.io/badge/License-MIT-00ff88?style=for-the-badge&labelColor=0a0a0a)](LICENSE)
 
 <br/>
 
-[📥 **Download Latest Setup (v1.0.3)**](https://github.com/riyazalsodie/RYZ-ClipSync/releases/download/1.0.3/RYZ.ClipSync.Setup.1.0.3.exe) • [✨ **Features**](#-features) • [🚀 **Quick Start**](#-quick-start) • [📑 **Pagination & Performance**](#-performance--architecture) • [⌨️ **Shortcuts**](#-keyboard-shortcuts) • [📬 **Support**](#-support)
+[📥 **Download Latest Setup (v1.1.0)**](https://github.com/riyazalsodie/RYZ-ClipSync/releases/download/v1.1.0/RYZ.ClipSync.Setup.1.1.0.exe) • [✨ **Features**](#-features) • [🚀 **Quick Start**](#-quick-start) • [📑 **Pagination & Performance**](#-performance--architecture) • [⌨️ **Shortcuts**](#-keyboard-shortcuts) • [📬 **Support**](#-support)
 
 <br/>
 
@@ -66,7 +66,7 @@ Equipped with **smart pagination controls**, **lazy loading**, and an **acrylic 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  🟢 🟡 🔴  RYZ ClipSync [v1.0.3]               [📌] [_] [✕] │
+│  🟢 🟡 🔴  RYZ ClipSync [v1.1.0]               [📌] [_] [✕] │
 ├─────────────────────────────────────────────────────────────┤
 │  🔍 Search clipboard (Ctrl + F)...                          │
 ├─────────────────────────────────────────────────────────────┤
@@ -107,9 +107,9 @@ Equipped with **smart pagination controls**, **lazy loading**, and an **acrylic 
 
 ### Windows Installer (Recommended)
 
-[![Download RYZ ClipSync](https://img.shields.io/badge/Download-RYZ%20ClipSync%20Setup%201.0.3.exe-00ff88?style=for-the-badge&logo=windows&logoColor=000&labelColor=111111)](https://github.com/riyazalsodie/RYZ-ClipSync/releases/download/1.0.3/RYZ.ClipSync.Setup.1.0.3.exe)
+[![Download RYZ ClipSync](https://img.shields.io/badge/Download-RYZ%20ClipSync%20Setup%201.1.0.exe-00ff88?style=for-the-badge&logo=windows&logoColor=000&labelColor=111111)](https://github.com/riyazalsodie/RYZ-ClipSync/releases/download/v1.1.0/RYZ.ClipSync.Setup.1.1.0.exe)
 
-1. Download **[RYZ.ClipSync.Setup.1.0.3.exe](https://github.com/riyazalsodie/RYZ-ClipSync/releases/download/1.0.3/RYZ.ClipSync.Setup.1.0.3.exe)**.
+1. Download **[RYZ.ClipSync.Setup.1.1.0.exe](https://github.com/riyazalsodie/RYZ-ClipSync/releases/download/v1.1.0/RYZ.ClipSync.Setup.1.1.0.exe)**.
 2. Run the installer and complete the setup wizard.
 3. Launch from the Start Menu or Desktop shortcut.
 4. ClipSync will dock in your system tray ready to capture clips silently.
@@ -171,7 +171,7 @@ npm start
 npm run build
 ```
 
-The output executable will be created in `dist/RYZ ClipSync Setup 1.0.3.exe`.
+The output executable will be created in `dist/RYZ ClipSync Setup 1.1.0.exe`.
 
 <br/>
 

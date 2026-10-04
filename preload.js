@@ -37,5 +37,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setIgnoreMouseEvents: (ignore, options) => ipcRenderer.send('set-ignore-mouse-events', ignore, options),
   resizeTray: (height) => ipcRenderer.send('resize-tray', height),
   setAlwaysOnTop: (enabled) => ipcRenderer.invoke('set-always-on-top', enabled),
-  getLogoData: () => ipcRenderer.invoke('get-logo-data')
+  getLogoData: () => ipcRenderer.invoke('get-logo-data'),
+  exportBackup: (options) => ipcRenderer.invoke('export-backup', options),
+  selectBackupFile: () => ipcRenderer.invoke('select-backup-file'),
+  importBackup: (options) => ipcRenderer.invoke('import-backup', options)
 });

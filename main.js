@@ -1,4 +1,4 @@
-const { app, BrowserWindow, clipboard, Tray, Menu, nativeImage, ipcMain, globalShortcut, screen, shell } = require('electron');
+const { app, BrowserWindow, clipboard, Tray, Menu, nativeImage, ipcMain, globalShortcut, screen, shell, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -1087,6 +1087,303 @@ ipcMain.handle('get-auto-startup', () => {
   }
 
   return app.getLoginItemSettings(loginSettings).openAtLogin;
+});
+
+// ── Backup & Restore: Encrypted Container (.clipsyncbak) ─────────────────
+function encryptPayload(dataObj, password) {
+  const salt = crypto.randomBytes(16);
+  const key = crypto.scryptSync(password, salt, 32);
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const plaintext = JSON.stringify(dataObj);
+  let ciphertext = cipher.update(plaintext, 'utf8', 'hex');
+  ciphertext += cipher.final('hex');
+  const authTag = cipher.getAuthTag().toString('hex');
+
+  return {
+    algorithm: 'aes-256-gcm',
+    kdf: 'scrypt',
+    salt: salt.toString('hex'),
+    iv: iv.toString('hex'),
+    authTag: authTag,
+    ciphertext: ciphertext
+  };
+}
+
+function decryptPayload(cryptoObj, ciphertextHex, password) {
+  const salt = Buffer.from(cryptoObj.salt, 'hex');
+  const key = crypto.scryptSync(password, salt, 32);
+  const iv = Buffer.from(cryptoObj.iv, 'hex');
+  const authTag = Buffer.from(cryptoObj.authTag, 'hex');
+
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(authTag);
+  let decrypted = decipher.update(ciphertextHex, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return JSON.parse(decrypted);
+}
+
+ipcMain.handle('export-backup', async (event, options = {}) => {
+  const { encrypt = false, password = '', includeImages = true } = options;
+
+  if (encrypt && (!password || typeof password !== 'string' || !password.trim())) {
+    return { success: false, error: 'A password is required for encrypted export.' };
+  }
+
+  const focusedWin = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+  const dateStr = new Date().toISOString().split('T')[0];
+  const defaultPath = `clipsync-backup-${dateStr}.clipsyncbak`;
+
+  const { canceled, filePath } = await dialog.showSaveDialog(focusedWin, {
+    title: 'Export ClipSync Backup',
+    defaultPath: defaultPath,
+    filters: [
+      { name: 'ClipSync Backup (.clipsyncbak)', extensions: ['clipsyncbak'] },
+      { name: 'JSON Backup (.json)', extensions: ['json'] }
+    ]
+  });
+
+  if (canceled || !filePath) {
+    return { canceled: true };
+  }
+
+  try {
+    const imagesMap = {};
+    let imageCount = 0;
+    if (includeImages) {
+      const imagesDir = getImagesDir();
+      for (const item of clipboardHistory) {
+        if (item.type === 'image' && item.imagePath) {
+          const fname = path.basename(item.imagePath);
+          if (fs.existsSync(item.imagePath) && !imagesMap[fname]) {
+            try {
+              imagesMap[fname] = fs.readFileSync(item.imagePath).toString('base64');
+              imageCount++;
+            } catch (e) {
+              console.error('Error bundling image into backup:', e);
+            }
+          }
+        }
+      }
+    }
+
+    const payloadData = {
+      appVersion: app.getVersion() || '1.1.0',
+      exportedAt: Date.now(),
+      settings: appSettings,
+      history: clipboardHistory,
+      images: imagesMap
+    };
+
+    let backupContainer;
+    if (encrypt) {
+      const cryptoResult = encryptPayload(payloadData, password);
+      backupContainer = {
+        format: 'clipsync-backup',
+        version: 1,
+        encrypted: true,
+        metadata: {
+          itemCount: clipboardHistory.length,
+          imageCount: imageCount,
+          createdAt: Date.now(),
+          appVersion: app.getVersion() || '1.1.0'
+        },
+        crypto: {
+          algorithm: cryptoResult.algorithm,
+          kdf: cryptoResult.kdf,
+          salt: cryptoResult.salt,
+          iv: cryptoResult.iv,
+          authTag: cryptoResult.authTag
+        },
+        payload: cryptoResult.ciphertext
+      };
+    } else {
+      backupContainer = {
+        format: 'clipsync-backup',
+        version: 1,
+        encrypted: false,
+        metadata: {
+          itemCount: clipboardHistory.length,
+          imageCount: imageCount,
+          createdAt: Date.now(),
+          appVersion: app.getVersion() || '1.1.0'
+        },
+        payload: payloadData
+      };
+    }
+
+    fs.writeFileSync(filePath, JSON.stringify(backupContainer, null, 2), 'utf8');
+    return {
+      success: true,
+      filePath,
+      itemCount: clipboardHistory.length,
+      imageCount,
+      encrypted: encrypt
+    };
+  } catch (err) {
+    console.error('Export error:', err);
+    return { success: false, error: err.message || 'Failed to export backup.' };
+  }
+});
+
+ipcMain.handle('select-backup-file', async (event) => {
+  const focusedWin = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+  const { canceled, filePaths } = await dialog.showOpenDialog(focusedWin, {
+    title: 'Select Backup File to Restore',
+    filters: [
+      { name: 'Supported Backups (.clipsyncbak, .json, .ecopastebak)', extensions: ['clipsyncbak', 'json', 'ecopastebak'] },
+      { name: 'All Files (*.*)', extensions: ['*'] }
+    ],
+    properties: ['openFile']
+  });
+
+  if (canceled || !filePaths || filePaths.length === 0) {
+    return { canceled: true };
+  }
+
+  const filePath = filePaths[0];
+  try {
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const parsed = JSON.parse(raw);
+
+    if (parsed.encrypted && parsed.crypto) {
+      return {
+        success: true,
+        filePath,
+        fileName: path.basename(filePath),
+        isEncrypted: true,
+        metadata: parsed.metadata || {}
+      };
+    } else {
+      const items = Array.isArray(parsed)
+        ? parsed
+        : (parsed.payload?.history || parsed.history || parsed.data || []);
+      const imgCount = parsed.metadata?.imageCount || Object.keys(parsed.payload?.images || parsed.images || {}).length;
+      return {
+        success: true,
+        filePath,
+        fileName: path.basename(filePath),
+        isEncrypted: false,
+        metadata: {
+          itemCount: items.length,
+          imageCount: imgCount,
+          createdAt: parsed.metadata?.createdAt || parsed.exportedAt || null
+        }
+      };
+    }
+  } catch (err) {
+    return { success: false, error: 'Could not read backup file: ' + err.message };
+  }
+});
+
+ipcMain.handle('import-backup', async (event, options = {}) => {
+  const { filePath, password = '', mode = 'merge' } = options;
+  if (!filePath || !fs.existsSync(filePath)) {
+    return { success: false, error: 'Selected file does not exist.' };
+  }
+
+  try {
+    const raw = fs.readFileSync(filePath, 'utf8');
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      return { success: false, error: 'Invalid backup file format (not valid JSON).' };
+    }
+
+    let payloadData;
+    if (parsed.encrypted && parsed.crypto) {
+      if (!password) {
+        return { success: false, error: 'Password required to decrypt backup.' };
+      }
+      try {
+        payloadData = decryptPayload(parsed.crypto, parsed.payload, password);
+      } catch (err) {
+        return { success: false, error: 'Incorrect password or corrupted backup file.' };
+      }
+    } else if (parsed.payload && parsed.payload.history) {
+      payloadData = parsed.payload;
+    } else if (Array.isArray(parsed)) {
+      payloadData = { history: parsed, images: {} };
+    } else if (parsed.history && Array.isArray(parsed.history)) {
+      payloadData = parsed;
+    } else {
+      return { success: false, error: 'Unrecognized backup structure.' };
+    }
+
+    const importedHistory = Array.isArray(payloadData.history) ? payloadData.history : [];
+    const importedImages = payloadData.images || {};
+    const imagesDir = getImagesDir();
+
+    // 1. Restore images to images directory
+    for (const [filename, base64Str] of Object.entries(importedImages)) {
+      if (typeof base64Str === 'string' && base64Str.length > 0) {
+        const destPath = path.join(imagesDir, filename);
+        if (!fs.existsSync(destPath)) {
+          try {
+            fs.writeFileSync(destPath, Buffer.from(base64Str, 'base64'));
+          } catch (e) {
+            console.error('Failed to restore image file:', filename, e);
+          }
+        }
+      }
+    }
+
+    // 2. Normalize imported items
+    const normalizedItems = importedHistory.map(item => {
+      const copy = { ...item };
+      if (!copy.type) {
+        copy.type = copy.imagePath || copy.thumbnail ? 'image' : 'text';
+      }
+      if (copy.type === 'image') {
+        const fname = path.basename(copy.imagePath || `${copy.id || Date.now()}.png`);
+        copy.imagePath = path.join(imagesDir, fname);
+      }
+      if (!copy.timestamp) {
+        copy.timestamp = Date.now();
+      }
+      return copy;
+    });
+
+    // 3. Apply mode
+    let addedCount = 0;
+    if (mode === 'replace') {
+      clipboardHistory = normalizedItems;
+      addedCount = normalizedItems.length;
+      if (payloadData.settings && typeof payloadData.settings === 'object') {
+        appSettings = { ...DEFAULT_SETTINGS, ...payloadData.settings };
+        saveSettings();
+      }
+    } else {
+      // Merge mode: Add items that don't exist
+      for (const imp of normalizedItems) {
+        let isDuplicate = false;
+        if (imp.type === 'text') {
+          isDuplicate = clipboardHistory.some(h => h.type === 'text' && h.text === imp.text);
+        } else if (imp.type === 'image') {
+          isDuplicate = clipboardHistory.some(h => h.type === 'image' && ((h.hash && imp.hash && h.hash === imp.hash) || (h.id && imp.id && h.id === imp.id)));
+        }
+        if (!isDuplicate) {
+          clipboardHistory.push(imp);
+          addedCount++;
+        }
+      }
+      // Sort newest first
+      clipboardHistory.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    }
+
+    trimHistoryAndSave();
+
+    return {
+      success: true,
+      mode: mode,
+      addedCount: addedCount,
+      totalCount: clipboardHistory.length
+    };
+  } catch (err) {
+    console.error('Import error:', err);
+    return { success: false, error: err.message || 'Failed to restore backup.' };
+  }
 });
 
 app.on('window-all-closed', (e) => {
